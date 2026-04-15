@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, notes, reminders, InsertNote, InsertReminder } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,128 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+/**
+ * Get all notes for a user
+ */
+export async function getUserNotes(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(notes).where(eq(notes.userId, userId)).orderBy(desc(notes.createdAt));
+}
+
+/**
+ * Get notes by category for a user
+ */
+export async function getNotesByCategory(userId: number, category: "Tasks" | "Deadlines" | "Schedule" | "Thoughts" | "Learning") {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(notes)
+    .where(eq(notes.userId, userId) && eq(notes.category, category))
+    .orderBy(desc(notes.createdAt));
+}
+
+/**
+ * Create a new note
+ */
+export async function createNote(data: InsertNote) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(notes).values(data);
+  return result;
+}
+
+/**
+ * Update a note
+ */
+export async function updateNote(noteId: number, data: Partial<InsertNote>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(notes).set(data).where(eq(notes.id, noteId));
+}
+
+/**
+ * Delete a note
+ */
+export async function deleteNote(noteId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(notes).where(eq(notes.id, noteId));
+}
+
+/**
+ * Get a single note by ID
+ */
+export async function getNoteById(noteId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(notes).where(eq(notes.id, noteId)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+/**
+ * Create a reminder
+ */
+export async function createReminder(data: InsertReminder) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(reminders).values(data);
+}
+
+/**
+ * Get pending reminders (not yet sent)
+ */
+export async function getPendingReminders() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(reminders).where(eq(reminders.isSent, 0));
+}
+
+/**
+ * Mark reminder as sent
+ */
+export async function markReminderAsSent(reminderId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(reminders).set({ isSent: 1 }).where(eq(reminders.id, reminderId));
+}
+
+/**
+ * Get reminders for a note
+ */
+export async function getRemindersForNote(noteId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(reminders).where(eq(reminders.noteId, noteId));
+}
+
+/**
+ * Delete reminders for a note
+ */
+export async function deleteRemindersForNote(noteId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(reminders).where(eq(reminders.noteId, noteId));
+}
+
+/**
+ * Get notes stats for a user
+ */
+export async function getNoteStats(userId: number) {
+  const db = await getDb();
+  if (!db) return { total: 0, completed: 0, pending: 0, overdue: 0 };
+  
+  const allNotes = await db.select().from(notes).where(eq(notes.userId, userId));
+  const completed = allNotes.filter(n => n.isCompleted).length;
+  const pending = allNotes.length - completed;
+  const now = new Date();
+  const overdue = allNotes.filter(n => !n.isCompleted && n.dueDate && n.dueDate < now).length;
+  
+  return {
+    total: allNotes.length,
+    completed,
+    pending,
+    overdue,
+  };
+}

@@ -25,4 +25,37 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+/**
+ * Notes table for storing user notes with AI-categorized metadata
+ */
+export const notes = mysqlTable("notes", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  category: mysqlEnum("category", ["Tasks", "Deadlines", "Schedule", "Thoughts", "Learning"]).notNull(),
+  priority: mysqlEnum("priority", ["Low", "Medium", "High"]).default("Medium").notNull(),
+  dueDate: timestamp("dueDate"),
+  scheduledDate: timestamp("scheduledDate"),
+  isCompleted: int("isCompleted").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Note = typeof notes.$inferSelect;
+export type InsertNote = typeof notes.$inferInsert;
+
+/**
+ * Reminders table for tracking scheduled notifications
+ */
+export const reminders = mysqlTable("reminders", {
+  id: int("id").autoincrement().primaryKey(),
+  noteId: int("noteId").notNull().references(() => notes.id, { onDelete: "cascade" }),
+  reminderTime: timestamp("reminderTime").notNull(),
+  notificationType: mysqlEnum("notificationType", ["push", "email", "both"]).default("both").notNull(),
+  isSent: int("isSent").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Reminder = typeof reminders.$inferSelect;
+export type InsertReminder = typeof reminders.$inferInsert;
