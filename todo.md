@@ -12,7 +12,7 @@
 - [x] Create tRPC procedures: createNote, updateNote, deleteNote, getNotes, getNotesByCategory
 - [x] Create reminder scheduling logic that triggers 1 hour before deadline/scheduled time
 - [x] Implement notification sending (push + email) for upcoming deadlines/schedules
-- [ ] Add tests for AI categorization, priority detection, and date extraction
+- [x] Add tests for AI categorization, priority detection, and date extraction
 
 ## Frontend - UI & Layout
 - [x] Build Brutalist design system: black background, white oversized condensed typography, red divider lines
@@ -24,7 +24,7 @@
 
 ## Frontend - Note Management
 - [x] Build note card component with title, content, category, priority, date display
-- [ ] Implement edit functionality with modal/inline editing
+- [x] Implement edit functionality with modal/inline editing
 - [x] Implement delete functionality with confirmation
 - [x] Implement mark-as-complete toggle for Tasks and Deadlines
 - [x] Implement priority level display and editing (Low/Medium/High)
@@ -33,8 +33,8 @@
 ## Frontend - Search & Filtering
 - [x] Implement search bar that filters notes by title/content
 - [x] Add category filter tabs
-- [ ] Add "Hide Completed" toggle
-- [ ] Add sort options (by date, priority, category)
+- [x] Add "Hide Completed" toggle
+- [x] Add sort options (by date, priority, category)
 
 ## Frontend - Stats & Dashboard
 - [x] Create stats widget showing: total notes, completed, pending, overdue counts

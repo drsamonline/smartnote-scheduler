@@ -4,6 +4,8 @@ import { trpc } from "@/lib/trpc";
 import { BrutalistDashboard } from "@/components/BrutalistDashboard";
 import { NoteCard } from "@/components/NoteCard";
 import { NotePreview } from "@/components/NotePreview";
+import { EditNoteDialog } from "@/components/EditNoteDialog";
+import { NoteFilters } from "@/components/NoteFilters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +19,9 @@ export default function Home() {
   const [showStats, setShowStats] = useState(true);
   const [preview, setPreview] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [hideCompleted, setHideCompleted] = useState(false);
+  const [sortBy, setSortBy] = useState<"date" | "priority" | "category">("date");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Queries
   const { data: notes = [], isLoading, refetch } = trpc.notes.list.useQuery();
@@ -39,6 +44,33 @@ export default function Home() {
     return counts;
   }, [notes]);
 
+  // Filter and sort notes
+  const filteredAndSortedNotes = useMemo(() => {
+    let filtered = notes;
+
+    // Apply hide completed filter
+    if (hideCompleted) {
+      filtered = filtered.filter((note) => !note.isCompleted);
+    }
+
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortBy === "date") {
+        const dateA = a.dueDate || a.scheduledDate || a.createdAt;
+        const dateB = b.dueDate || b.scheduledDate || b.createdAt;
+        return new Date(dateB).getTime() - new Date(dateA).getTime();
+      } else if (sortBy === "priority") {
+        const priorityOrder = { High: 0, Medium: 1, Low: 2 };
+        return priorityOrder[a.priority as keyof typeof priorityOrder] - priorityOrder[b.priority as keyof typeof priorityOrder];
+      } else {
+        // category
+        return a.category.localeCompare(b.category);
+      }
+    });
+
+    return sorted;
+  }, [notes, hideCompleted, sortBy]);
+
   // Mutations
   const createNoteMutation = trpc.notes.create.useMutation({
     onSuccess: () => {
@@ -54,6 +86,14 @@ export default function Home() {
 
   const toggleCompleteMutation = trpc.notes.toggleComplete.useMutation({
     onSuccess: () => refetch(),
+  });
+
+  const updateNoteMutation = trpc.notes.updateNote.useMutation({
+    onSuccess: () => {
+      setEditingNote(null);
+      setIsEditDialogOpen(false);
+      refetch();
+    },
   });
 
   // Simulate AI analysis for preview
@@ -92,6 +132,19 @@ export default function Home() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleEditNote = (note: any) => {
+    setEditingNote(note);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async (data: any) => {
+    if (!editingNote) return;
+    await updateNoteMutation.mutateAsync({
+      id: editingNote.id,
+      ...data,
+    });
   };
 
   if (!user) return null;
@@ -178,10 +231,20 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Filters */}
+        <div className="p-8 border-b-2 border-white">
+          <NoteFilters
+            hideCompleted={hideCompleted}
+            onHideCompletedChange={setHideCompleted}
+            sortBy={sortBy}
+            onSortChange={setSortBy}
+          />
+        </div>
+
         {/* Notes List */}
         <div className="p-8">
           <h2 className="text-3xl font-bold mb-6">
-            ALL NOTES {notes.length > 0 && `(${notes.length})`}
+            ALL NOTES {filteredAndSortedNotes.length > 0 && `(${filteredAndSortedNotes.length})`}
           </h2>
           <div className="h-1 bg-red-600 w-24 mb-8"></div>
 
@@ -189,18 +252,18 @@ export default function Home() {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-red-600" />
             </div>
-          ) : notes.length === 0 ? (
+          ) : filteredAndSortedNotes.length === 0 ? (
             <div className="border-2 border-white p-12 text-center">
               <p className="text-gray-400 text-lg font-bold">NO NOTES YET</p>
               <p className="text-gray-500">Start by typing something above</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {notes.map((note) => (
+              {filteredAndSortedNotes.map((note) => (
                 <NoteCard
                   key={note.id}
                   note={note}
-                  onEdit={setEditingNote}
+                  onEdit={handleEditNote}
                   onDelete={(id) => deleteNoteMutation.mutate({ id })}
                   onToggleComplete={(id, isCompleted) =>
                     toggleCompleteMutation.mutate({ id, isCompleted })
@@ -211,6 +274,15 @@ export default function Home() {
           )}
         </div>
       </div>
+
+      {/* Edit Dialog */}
+      <EditNoteDialog
+        note={editingNote}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSave={handleSaveEdit}
+        isLoading={updateNoteMutation.isPending}
+      />
     </BrutalistDashboard>
   );
 }

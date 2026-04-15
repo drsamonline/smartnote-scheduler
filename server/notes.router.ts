@@ -200,4 +200,30 @@ export const notesRouter = router({
       await updateNote(input.id, { isCompleted: input.isCompleted });
       return getNoteById(input.id);
     }),
+
+  /**
+   * Update note title, content, and priority
+   */
+  updateNote: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        title: z.string().min(1),
+        content: z.string().min(1),
+        priority: z.enum(["Low", "Medium", "High"]),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const note = await getNoteById(input.id);
+      if (!note || note.userId !== ctx.user.id) {
+        throw new Error("Note not found");
+      }
+
+      await updateNote(input.id, {
+        title: input.title,
+        content: input.content,
+        priority: input.priority,
+      });
+      return getNoteById(input.id);
+    }),
 });
