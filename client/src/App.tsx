@@ -6,6 +6,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { Loader2 } from "lucide-react";
+import { loadPreferences } from "@/lib/preferences";
 
 const Home = lazy(() => import("./pages/Home"));
 const CategoryView = lazy(() => import("./pages/CategoryView"));
@@ -46,8 +47,8 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider
-        defaultTheme="dark"
-        // switchable
+        defaultTheme={loadPreferences().theme}
+        switchable
       >
         <TooltipProvider>
           <Toaster />

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
-import { noteTemplates } from "@/data/noteTemplates";
+import { loadCustomTemplates, noteTemplates } from "@/data/noteTemplates";
 import { loadPreferences } from "@/lib/preferences";
 
 export default function Home() {
@@ -25,6 +25,14 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<"date" | "priority" | "category">(() => loadPreferences().sortBy);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState("");
+  const [customTemplates, setCustomTemplates] = useState(() => loadCustomTemplates());
+  const allTemplates = useMemo(() => [...noteTemplates, ...customTemplates], [customTemplates]);
+
+  useEffect(() => {
+    const syncTemplates = () => setCustomTemplates(loadCustomTemplates());
+    window.addEventListener("smartnote-templates-changed", syncTemplates);
+    return () => window.removeEventListener("smartnote-templates-changed", syncTemplates);
+  }, []);
 
   // Queries
   const { data: notes = [], isLoading, refetch } = trpc.notes.list.useQuery();
@@ -139,7 +147,7 @@ export default function Home() {
 
   const handleTemplateChange = (templateId: string) => {
     setSelectedTemplate(templateId);
-    const template = noteTemplates.find((item) => item.id === templateId);
+    const template = allTemplates.find((item) => item.id === templateId);
     if (template) handleContentChange(template.content);
   };
 
@@ -231,9 +239,9 @@ export default function Home() {
               <label htmlFor="note-template" className="text-xs font-bold tracking-[0.25em] text-gray-500">START FROM TEMPLATE</label>
               <select id="note-template" value={selectedTemplate} onChange={(event) => handleTemplateChange(event.target.value)} className="focus-brutal bg-gray-950 border border-white/40 px-3 py-2 text-sm text-white min-w-56">
                 <option value="">Blank note</option>
-                {noteTemplates.map((template) => <option key={template.id} value={template.id}>{template.title} · {template.category}</option>)}
+                {allTemplates.map((template) => <option key={template.id} value={template.id}>{template.title} · {template.category}</option>)}
               </select>
-              <span className="text-[10px] tracking-widest text-gray-600">25 FORMATS</span>
+              <span className="text-[10px] tracking-widest text-gray-600">{allTemplates.length} FORMATS</span>
             </div>
             <Textarea
               id="note-composer"

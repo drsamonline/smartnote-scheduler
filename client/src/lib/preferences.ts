@@ -1,15 +1,18 @@
 export type SortPreference = "date" | "priority" | "category";
+export type ThemePreference = "light" | "dark";
 
 export type AppPreferences = {
   showStats: boolean;
   hideCompleted: boolean;
   sortBy: SortPreference;
+  theme: ThemePreference;
 };
 
 export const DEFAULT_PREFERENCES: AppPreferences = {
   showStats: true,
   hideCompleted: false,
   sortBy: "date",
+  theme: "dark",
 };
 
 const STORAGE_KEY = "smartnote.preferences";

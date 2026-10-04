@@ -80,6 +80,43 @@ export const notesRouter = router({
       }
     }),
 
+  importBackup: protectedProcedure
+    .input(z.object({
+      notes: z.array(z.object({
+        title: z.string().min(1).max(255),
+        content: z.string().min(1),
+        category: z.enum(["Tasks", "Deadlines", "Schedule", "Thoughts", "Learning"]),
+        priority: z.enum(["Low", "Medium", "High"]),
+        isCompleted: z.number().optional(),
+        dueDate: z.string().datetime().nullable().optional(),
+        scheduledDate: z.string().datetime().nullable().optional(),
+      })).max(500),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      for (const note of input.notes) {
+        const dueDate = note.dueDate ? new Date(note.dueDate) : undefined;
+        const scheduledDate = note.scheduledDate ? new Date(note.scheduledDate) : undefined;
+        const createdNoteId = await createNote({
+          userId: ctx.user.id,
+          title: note.title,
+          content: note.content,
+          category: note.category,
+          priority: note.priority,
+          isCompleted: note.isCompleted ? 1 : 0,
+          dueDate,
+          scheduledDate,
+        });
+        const eventDate = dueDate || scheduledDate;
+        if (eventDate) {
+          const reminderTime = new Date(eventDate.getTime() - 60 * 60 * 1000);
+          if (reminderTime > new Date()) {
+            await createReminder({ noteId: createdNoteId, reminderTime, notificationType: "both", isSent: 0 });
+          }
+        }
+      }
+      return { imported: input.notes.length };
+    }),
+
   /**
    * Get all notes for the current user
    */

@@ -142,6 +142,18 @@
   h3 {
     @apply text-2xl md:text-3xl;
   }
+
+  :root:not(.dark) body {
+    background-color: #f2f2ee;
+    background-image: linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
+  }
+
+  :root:not(.dark) .bg-black { background-color: #f2f2ee !important; color: #111 !important; }
+  :root:not(.dark) .bg-gray-950, :root:not(.dark) .bg-gray-900 { background-color: #ffffff !important; }
+  :root:not(.dark) .text-white { color: #111 !important; }
+  :root:not(.dark) .border-white { border-color: #111 !important; }
+  :root:not(.dark) .hover\:bg-gray-900:hover { background-color: #e4e4df !important; }
+  :root:not(.dark) .placeholder-gray-500::placeholder { color: #6b6b66 !important; }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   [type="button"]:not(:disabled),
