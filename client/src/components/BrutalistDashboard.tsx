@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings, Keyboard } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { getLoginUrl } from "@/const";
 
@@ -13,6 +14,8 @@ interface BrutalistDashboardProps {
 export function BrutalistDashboard({ children, currentCategory, categoryCounts = {} }: BrutalistDashboardProps) {
   const { user, logout } = useAuth();
   const [location, navigate] = useLocation();
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [sequence, setSequence] = useState("");
 
   const categories = [
     { name: "Tasks", icon: "✓", color: "bg-blue-600" },
@@ -21,6 +24,36 @@ export function BrutalistDashboard({ children, currentCategory, categoryCounts =
     { name: "Thoughts", icon: "💭", color: "bg-purple-600" },
     { name: "Learning", icon: "📚", color: "bg-yellow-600" },
   ];
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isTyping = target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.isContentEditable;
+      if (event.key === "?" && !isTyping) {
+        event.preventDefault();
+        setShowShortcuts((current) => !current);
+        return;
+      }
+      if (isTyping) return;
+      const key = event.key.toLowerCase();
+      if (sequence === "g") {
+        setSequence("");
+        if (key === "h") navigate("/");
+        if (key === "s") navigate("/settings");
+        if (key === "f") navigate("/search");
+        return;
+      }
+      if (key === "g") {
+        setSequence("g");
+        window.setTimeout(() => setSequence(""), 1200);
+      } else if (key === "n") {
+        navigate("/");
+        window.setTimeout(() => document.getElementById("note-composer")?.focus(), 0);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [navigate, sequence]);
 
   if (!user) {
     return (
@@ -89,6 +122,15 @@ export function BrutalistDashboard({ children, currentCategory, categoryCounts =
             <span className="hidden md:inline">ALERTS</span>
           </button>
 
+          <button
+            onClick={() => navigate("/settings")}
+            aria-label="Settings"
+            className={`focus-brutal w-full px-2 md:px-4 py-3 font-bold text-lg transition-all duration-200 flex items-center justify-center md:justify-start ${location === "/settings" ? "bg-red-600 text-white" : "hover:bg-gray-900 text-white"}`}
+          >
+            <Settings className="md:hidden w-6 h-6" aria-hidden="true" />
+            <span className="hidden md:inline">SETTINGS</span>
+          </button>
+
           {categories.map((cat) => (
             <button
               key={cat.name}
@@ -124,7 +166,7 @@ export function BrutalistDashboard({ children, currentCategory, categoryCounts =
           </div>
           <div className="border-l-2 border-red-600 pl-3 py-1">
             <p className="text-[10px] font-bold tracking-[0.25em] text-gray-500">AUTHOR</p>
-            <p className="text-sm font-bold text-white">MANUS</p>
+            <p className="text-sm font-bold text-white">DR SOHIL MOMIN</p>
             <p className="text-[10px] tracking-widest text-gray-600">SMARTNOTE SCHEDULER</p>
           </div>
           <Button
@@ -142,6 +184,21 @@ export function BrutalistDashboard({ children, currentCategory, categoryCounts =
       <div className="min-w-0 flex-1 overflow-auto">
         {children}
       </div>
+
+      {showShortcuts && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-6" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
+          <div className="w-full max-w-lg border-2 border-white bg-black p-6 md:p-8 shadow-[8px_8px_0_#dc2626]">
+            <div className="flex items-center justify-between mb-6">
+              <div><p className="text-red-500 text-xs font-bold tracking-[0.3em]">COMMANDS / 03</p><h2 className="text-3xl font-bold">SHORTCUTS</h2></div>
+              <Keyboard className="text-red-600" />
+            </div>
+            <div className="space-y-3 text-sm">
+              {[ ["N", "Focus new note"], ["⌘ / CTRL + ENTER", "Create note"], ["?", "Toggle this panel"], ["G H", "All notes"], ["G S", "Settings"], ["G F", "Search"] ].map(([key, label]) => <div key={key} className="flex items-center justify-between border-b border-white/20 pb-2"><span className="text-gray-400">{label}</span><kbd className="bg-white text-black px-2 py-1 font-bold">{key}</kbd></div>)}
+            </div>
+            <button onClick={() => setShowShortcuts(false)} className="focus-brutal mt-8 border-2 border-white px-5 py-2 font-bold hover:bg-white hover:text-black">CLOSE</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

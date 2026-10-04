@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { BrutalistDashboard } from "@/components/BrutalistDashboard";
@@ -10,18 +10,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
+import { noteTemplates } from "@/data/noteTemplates";
+import { loadPreferences } from "@/lib/preferences";
 
 export default function Home() {
   const { user } = useAuth();
   const [noteContent, setNoteContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingNote, setEditingNote] = useState<any>(null);
-  const [showStats, setShowStats] = useState(true);
+  const [showStats, setShowStats] = useState(() => loadPreferences().showStats);
   const [preview, setPreview] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [hideCompleted, setHideCompleted] = useState(false);
-  const [sortBy, setSortBy] = useState<"date" | "priority" | "category">("date");
+  const [hideCompleted, setHideCompleted] = useState(() => loadPreferences().hideCompleted);
+  const [sortBy, setSortBy] = useState<"date" | "priority" | "category">(() => loadPreferences().sortBy);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState("");
 
   // Queries
   const { data: notes = [], isLoading, refetch } = trpc.notes.list.useQuery();
@@ -134,6 +137,23 @@ export default function Home() {
     }
   };
 
+  const handleTemplateChange = (templateId: string) => {
+    setSelectedTemplate(templateId);
+    const template = noteTemplates.find((item) => item.id === templateId);
+    if (template) handleContentChange(template.content);
+  };
+
+  useEffect(() => {
+    const handleComposerShortcut = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && noteContent.trim()) {
+        event.preventDefault();
+        void handleCreateNote();
+      }
+    };
+    window.addEventListener("keydown", handleComposerShortcut);
+    return () => window.removeEventListener("keydown", handleComposerShortcut);
+  }, [noteContent]);
+
   const handleEditNote = (note: any) => {
     setEditingNote(note);
     setIsEditDialogOpen(true);
@@ -161,7 +181,7 @@ export default function Home() {
             <div className="h-1 bg-red-600 w-24 mb-4"></div>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
               <p className="text-gray-300 text-lg">Turn raw thoughts into organized action.</p>
-              <span className="text-[10px] font-bold tracking-[0.25em] text-gray-500">AUTHOR / MANUS</span>
+              <span className="text-[10px] font-bold tracking-[0.25em] text-gray-500">AUTHOR / DR SOHIL MOMIN</span>
             </div>
           </div>
         </div>
@@ -207,7 +227,16 @@ export default function Home() {
             <p className="text-xs text-gray-500 tracking-widest">NATURAL LANGUAGE ENABLED</p>
           </div>
           <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <label htmlFor="note-template" className="text-xs font-bold tracking-[0.25em] text-gray-500">START FROM TEMPLATE</label>
+              <select id="note-template" value={selectedTemplate} onChange={(event) => handleTemplateChange(event.target.value)} className="focus-brutal bg-gray-950 border border-white/40 px-3 py-2 text-sm text-white min-w-56">
+                <option value="">Blank note</option>
+                {noteTemplates.map((template) => <option key={template.id} value={template.id}>{template.title} · {template.category}</option>)}
+              </select>
+              <span className="text-[10px] tracking-widest text-gray-600">25 FORMATS</span>
+            </div>
             <Textarea
+              id="note-composer"
               value={noteContent}
               onChange={(e) => handleContentChange(e.target.value)}
               placeholder="Type anything... AI will auto-categorize it"
@@ -234,6 +263,7 @@ export default function Home() {
                 onClick={() => {
                   setNoteContent("");
                   setPreview(null);
+                  setSelectedTemplate("");
                 }}
                 variant="outline"
                 className="focus-brutal border-2 border-white text-white hover:bg-white hover:text-black font-bold px-6 py-3 transition-colors"

@@ -11,6 +11,7 @@ const Home = lazy(() => import("./pages/Home"));
 const CategoryView = lazy(() => import("./pages/CategoryView"));
 const SearchPage = lazy(() => import("@/pages/SearchPage"));
 const NotificationHistory = lazy(() => import("@/pages/NotificationHistory"));
+const Settings = lazy(() => import("@/pages/Settings"));
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -27,6 +28,7 @@ function Router() {
         <Route path="/category/:category" component={CategoryView} />
         <Route path="/search" component={SearchPage} />
         <Route path="/notifications" component={NotificationHistory} />
+        <Route path="/settings" component={Settings} />
         <Route path="/404" component={NotFound} />
         {/* Final fallback route */}
         <Route component={NotFound} />
