@@ -11,7 +11,7 @@
 - [x] Implement date/time extraction from natural language (e.g., "tomorrow at 3pm")
 - [x] Create tRPC procedures: createNote, updateNote, deleteNote, getNotes, getNotesByCategory
 - [x] Create reminder scheduling logic that triggers 1 hour before deadline/scheduled time
-- [x] Implement notification sending (push + email) for upcoming deadlines/schedules
+- [x] Implement reminder notification delivery through Manus owner notifications
 - [x] Add tests for AI categorization, priority detection, and date extraction
 
 ## Frontend - UI & Layout
@@ -55,7 +55,7 @@
 - [x] Test notification timing and delivery
 - [ ] Cross-browser testing (manual QA)
 - [x] Mobile responsiveness verification
-- [ ] Performance optimization (query optimization, caching - future improvement)
+- [ ] Performance optimization (query indexes and due-time filtering completed; caching remains future work)
 
 ## Deployment
 - [x] Create final checkpoint
@@ -92,3 +92,24 @@ All essential features for SmartNote Scheduler v1.0 are fully implemented:
 - Notification history not tracked in UI
 - Date extraction limited to common natural language patterns
 - No real-time collaboration
+
+## Debug follow-up
+
+- [x] Inspect current project files, runtime logs, and test/build status
+- [x] Fix confirmed runtime, type, or feature issues
+- [x] Run tests, type checks, and production build
+- [x] Review and document remaining roadmap gaps (email delivery, notification history, cross-browser testing, performance)
+
+### Debug fixes applied
+- Fixed user isolation in category queries by using Drizzle `and(...)` instead of JavaScript `&&`.
+- Fixed concurrent note creation by reading the exact inserted row ID.
+- Failed reminder deliveries remain pending for retry.
+- Reminder selection is filtered by due time in SQL and indexed.
+- Replaced the non-persistent in-process timer with `/api/scheduled/process-reminders`, ready for a Manus Heartbeat job.
+- Added responsive mobile navigation and verified the 375px dashboard, category, and search views.
+
+### Production reminder setup
+After the project is deployed, create a one-minute project Heartbeat for:
+`POST /api/scheduled/process-reminders`
+
+The current sandbox preview is not a durable production callback target, so the Heartbeat job is intentionally not created during this debug pass.

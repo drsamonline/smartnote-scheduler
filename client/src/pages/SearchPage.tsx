@@ -100,14 +100,14 @@ export default function SearchPage() {
       <div className="bg-black text-white min-h-screen">
         {/* Header */}
         <div className="border-b-2 border-white p-8">
-          <h1 className="text-6xl font-bold mb-4">SEARCH</h1>
+          <h1 className="text-4xl md:text-6xl font-bold mb-4">SEARCH</h1>
           <div className="h-1 bg-red-600 w-24 mb-4"></div>
           <p className="text-gray-400 text-lg">Find notes by title or content</p>
         </div>
 
         {/* Search Input */}
         <div className="border-b-2 border-white p-8">
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

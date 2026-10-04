@@ -41,40 +41,45 @@ export function BrutalistDashboard({ children, currentCategory, categoryCounts =
   }
 
   return (
-    <div className="flex h-screen bg-black text-white">
+    <div className="flex h-screen min-w-0 bg-black text-white">
       {/* Sidebar */}
-      <div className="w-64 border-r-2 border-white p-8 flex flex-col">
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold mb-2">SMARTNOTE</h1>
-          <div className="h-0.5 bg-red-600 w-full mb-4"></div>
-          <p className="text-sm font-bold tracking-widest">SCHEDULER</p>
+      <div className="w-16 md:w-64 shrink-0 border-r-2 border-white p-2 md:p-8 flex flex-col">
+        <div className="mb-6 md:mb-12">
+          <h1 className="hidden md:block text-4xl font-bold mb-2">SMARTNOTE</h1>
+          <div className="hidden md:block h-0.5 bg-red-600 w-full mb-4"></div>
+          <p className="hidden md:block text-sm font-bold tracking-widest">SCHEDULER</p>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-4">
+        <nav className="flex-1 space-y-2 md:space-y-4">
           <button
             onClick={() => navigate("/")}
-            className={`w-full text-left px-4 py-3 font-bold text-lg transition-colors ${
+            aria-label="All notes"
+            className={`w-full px-2 md:px-4 py-3 font-bold text-lg transition-colors flex items-center justify-center md:justify-start ${
               !currentCategory
                 ? "bg-red-600 text-white"
                 : "hover:bg-gray-900 text-white"
             }`}
           >
-            ALL NOTES
+            <span className="md:hidden text-2xl" aria-hidden="true">☷</span>
+            <span className="hidden md:inline">ALL NOTES</span>
           </button>
 
           <button
             onClick={() => navigate("/search")}
-            className="w-full text-left px-4 py-3 font-bold text-lg transition-colors hover:bg-gray-900 text-white"
+            aria-label="Search"
+            className="w-full px-2 md:px-4 py-3 font-bold text-lg transition-colors flex items-center justify-center md:justify-start hover:bg-gray-900 text-white"
           >
-            SEARCH
+            <span className="md:hidden text-2xl" aria-hidden="true">⌕</span>
+            <span className="hidden md:inline">SEARCH</span>
           </button>
 
           {categories.map((cat) => (
             <button
               key={cat.name}
               onClick={() => navigate(`/category/${cat.name}`)}
-              className={`w-full text-left px-4 py-3 font-bold text-lg transition-colors flex items-center justify-between gap-3 ${
+            aria-label={cat.name}
+            className={`w-full px-2 md:px-4 py-3 font-bold text-lg transition-colors flex items-center justify-center md:justify-between gap-3 ${
                 currentCategory === cat.name
                   ? "bg-red-600 text-white"
                   : "hover:bg-gray-900 text-white"
@@ -84,9 +89,9 @@ export function BrutalistDashboard({ children, currentCategory, categoryCounts =
                 <span className={`${cat.color} w-8 h-8 flex items-center justify-center text-white font-bold`}>
                   {cat.icon}
                 </span>
-                {cat.name.toUpperCase()}
+                <span className="hidden md:inline">{cat.name.toUpperCase()}</span>
               </div>
-              <span className="text-sm font-bold text-gray-300">
+              <span className="hidden md:inline text-sm font-bold text-gray-300">
                 {categoryCounts[cat.name] || 0}
               </span>
             </button>
@@ -94,10 +99,10 @@ export function BrutalistDashboard({ children, currentCategory, categoryCounts =
         </nav>
 
         {/* Divider */}
-        <div className="h-0.5 bg-red-600 w-full my-8"></div>
+        <div className="hidden md:block h-0.5 bg-red-600 w-full my-8"></div>
 
         {/* User Info */}
-        <div className="space-y-4">
+        <div className="hidden md:block space-y-4">
           <div className="border-2 border-white p-4">
             <p className="text-xs font-bold tracking-widest text-gray-400">USER</p>
             <p className="text-lg font-bold truncate">{user.name || user.email}</p>
@@ -114,7 +119,7 @@ export function BrutalistDashboard({ children, currentCategory, categoryCounts =
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="min-w-0 flex-1 overflow-auto">
         {children}
       </div>
     </div>

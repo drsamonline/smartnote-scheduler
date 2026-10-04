@@ -1,4 +1,4 @@
-import { eq, desc } from "drizzle-orm";
+import { and, desc, eq, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, notes, reminders, InsertNote, InsertReminder } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -107,7 +107,7 @@ export async function getNotesByCategory(userId: number, category: "Tasks" | "De
   return db
     .select()
     .from(notes)
-    .where(eq(notes.userId, userId) && eq(notes.category, category))
+    .where(and(eq(notes.userId, userId), eq(notes.category, category)))
     .orderBy(desc(notes.createdAt));
 }
 
@@ -118,7 +118,7 @@ export async function createNote(data: InsertNote) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(notes).values(data);
-  return result;
+  return Number(result[0].insertId);
 }
 
 /**
@@ -161,10 +161,14 @@ export async function createReminder(data: InsertReminder) {
 /**
  * Get pending reminders (not yet sent)
  */
-export async function getPendingReminders() {
+export async function getPendingReminders(now = new Date()) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(reminders).where(eq(reminders.isSent, 0));
+  return db
+    .select()
+    .from(reminders)
+    .where(and(eq(reminders.isSent, 0), lte(reminders.reminderTime, now)))
+    .orderBy(reminders.reminderTime);
 }
 
 /**

@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, index, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -40,7 +40,11 @@ export const notes = mysqlTable("notes", {
   isCompleted: int("isCompleted").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  userCategoryIdx: index("notes_user_category_idx").on(table.userId, table.category),
+  userDueDateIdx: index("notes_user_due_date_idx").on(table.userId, table.dueDate),
+  userScheduledDateIdx: index("notes_user_scheduled_date_idx").on(table.userId, table.scheduledDate),
+}));
 
 export type Note = typeof notes.$inferSelect;
 export type InsertNote = typeof notes.$inferInsert;
@@ -55,7 +59,10 @@ export const reminders = mysqlTable("reminders", {
   notificationType: mysqlEnum("notificationType", ["push", "email", "both"]).default("both").notNull(),
   isSent: int("isSent").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  dueReminderIdx: index("reminders_sent_time_idx").on(table.isSent, table.reminderTime),
+  noteIdx: index("reminders_note_id_idx").on(table.noteId),
+}));
 
 export type Reminder = typeof reminders.$inferSelect;
 export type InsertReminder = typeof reminders.$inferInsert;

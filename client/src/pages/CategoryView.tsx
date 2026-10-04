@@ -124,7 +124,7 @@ export default function CategoryView() {
               {info.icon}
             </div>
             <div>
-              <h1 className="text-6xl font-bold">{category.toUpperCase()}</h1>
+              <h1 className="text-4xl md:text-6xl font-bold">{category.toUpperCase()}</h1>
               <p className="text-gray-400 text-lg">{info.description}</p>
             </div>
           </div>

@@ -7,6 +7,8 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { processPendingReminders } from "../notifications";
+import { sdk } from "./sdk";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -35,6 +37,24 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  // Durable reminder callback invoked by a Manus Heartbeat job.
+  app.post("/api/scheduled/process-reminders", async (req, res) => {
+    try {
+      const user = await sdk.authenticateRequest(req);
+      if (!user.isCron || !user.taskUid) {
+        return res.status(403).json({ error: "cron-only" });
+      }
+
+      await processPendingReminders();
+      return res.json({ ok: true });
+    } catch (error) {
+      console.error("[Notifications] Scheduled reminder callback failed:", error);
+      return res.status(500).json({
+        error: String(error),
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
   // tRPC API
   app.use(
     "/api/trpc",

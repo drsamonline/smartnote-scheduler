@@ -7,8 +7,8 @@ import { notifyOwner } from "./_core/notification";
  */
 export async function processPendingReminders() {
   try {
-    const reminders = await getPendingReminders();
     const now = new Date();
+    const reminders = await getPendingReminders(now);
 
     for (const reminder of reminders) {
       const reminderTime = new Date(reminder.reminderTime);
@@ -19,10 +19,12 @@ export async function processPendingReminders() {
 
         if (note) {
           // Send notification
-          await sendReminder(note, reminder);
+          const delivered = await sendReminder(note);
 
-          // Mark as sent
-          await markReminderAsSent(reminder.id);
+          // Keep failed reminders pending so a later processor run can retry.
+          if (delivered) {
+            await markReminderAsSent(reminder.id);
+          }
         }
       }
     }
@@ -34,7 +36,7 @@ export async function processPendingReminders() {
 /**
  * Send a reminder notification
  */
-async function sendReminder(note: any, reminder: any) {
+async function sendReminder(note: any): Promise<boolean> {
   const title = `Reminder: ${note.title}`;
   const content = `${note.category} due at ${new Date(note.dueDate || note.scheduledDate).toLocaleString()}`;
 
@@ -46,22 +48,9 @@ async function sendReminder(note: any, reminder: any) {
     });
 
     console.log(`[Notifications] Sent reminder for note ${note.id}`);
+    return true;
   } catch (error) {
     console.error(`[Notifications] Failed to send reminder for note ${note.id}:`, error);
+    return false;
   }
-}
-
-/**
- * Start reminder processing interval
- */
-export function startReminderProcessor() {
-  // Process reminders every minute
-  const intervalId = setInterval(() => {
-    processPendingReminders();
-  }, 60 * 1000);
-
-  // Also run immediately on startup
-  processPendingReminders();
-
-  return intervalId;
 }

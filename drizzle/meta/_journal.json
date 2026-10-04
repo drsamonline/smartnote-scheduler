@@ -15,6 +15,13 @@
       "when": 1776275108048,
       "tag": "0001_good_hitman",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1791092885952,
+      "tag": "0002_sticky_blue_blade",
+      "breakpoints": true
     }
   ]
 }

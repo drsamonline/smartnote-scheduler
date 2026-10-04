@@ -154,7 +154,7 @@ export default function Home() {
       <div className="bg-black text-white min-h-screen">
         {/* Header */}
         <div className="border-b-2 border-white p-8">
-          <h1 className="text-6xl font-bold mb-4">CAPTURE</h1>
+          <h1 className="text-4xl md:text-6xl font-bold mb-4">CAPTURE</h1>
           <div className="h-1 bg-red-600 w-24 mb-4"></div>
           <p className="text-gray-400 text-lg">AI-powered note organization in real-time</p>
         </div>

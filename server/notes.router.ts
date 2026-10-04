@@ -40,7 +40,7 @@ export const notesRouter = router({
         }
 
         // Create the note
-        await createNote({
+        const createdNoteId = await createNote({
           userId: ctx.user.id,
           title: analysis.title,
           content: input.content,
@@ -51,9 +51,9 @@ export const notesRouter = router({
           isCompleted: 0,
         });
 
-        // Get the created note (most recent for this user)
-        const allNotes = await getUserNotes(ctx.user.id);
-        const createdNote = allNotes[0];
+        // Read back the exact inserted row rather than relying on ordering,
+        // which is unsafe when two notes are created concurrently.
+        const createdNote = await getNoteById(createdNoteId);
 
         // Create reminder if date is set
         if ((dueDate || scheduledDate) && createdNote) {
