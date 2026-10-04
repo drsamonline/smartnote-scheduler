@@ -45,9 +45,13 @@ export function BrutalistDashboard({ children, currentCategory, categoryCounts =
       {/* Sidebar */}
       <div className="w-16 md:w-64 shrink-0 border-r-2 border-white p-2 md:p-8 flex flex-col">
         <div className="mb-6 md:mb-12">
-          <h1 className="hidden md:block text-4xl font-bold mb-2">SMARTNOTE</h1>
-          <div className="hidden md:block h-0.5 bg-red-600 w-full mb-4"></div>
-          <p className="hidden md:block text-sm font-bold tracking-widest">SCHEDULER</p>
+          <div className="hidden md:flex items-center gap-3 mb-3">
+            <span className="w-3 h-3 bg-red-600 animate-pulse" aria-hidden="true" />
+            <span className="text-[10px] tracking-[0.3em] text-gray-500">LIVE SYSTEM</span>
+          </div>
+          <h1 className="hidden md:block text-4xl font-bold mb-2 tracking-tight">SMARTNOTE</h1>
+          <div className="hidden md:block h-1 bg-red-600 w-full mb-4"></div>
+          <p className="hidden md:block text-sm font-bold tracking-[0.35em] text-gray-300">SCHEDULER / 01</p>
         </div>
 
         {/* Navigation */}
@@ -55,7 +59,7 @@ export function BrutalistDashboard({ children, currentCategory, categoryCounts =
           <button
             onClick={() => navigate("/")}
             aria-label="All notes"
-            className={`w-full px-2 md:px-4 py-3 font-bold text-lg transition-colors flex items-center justify-center md:justify-start ${
+            className={`focus-brutal w-full px-2 md:px-4 py-3 font-bold text-lg transition-all duration-200 flex items-center justify-center md:justify-start ${
               !currentCategory
                 ? "bg-red-600 text-white"
                 : "hover:bg-gray-900 text-white"
@@ -68,7 +72,7 @@ export function BrutalistDashboard({ children, currentCategory, categoryCounts =
           <button
             onClick={() => navigate("/search")}
             aria-label="Search"
-            className="w-full px-2 md:px-4 py-3 font-bold text-lg transition-colors flex items-center justify-center md:justify-start hover:bg-gray-900 text-white"
+            className="focus-brutal w-full px-2 md:px-4 py-3 font-bold text-lg transition-all duration-200 flex items-center justify-center md:justify-start hover:bg-gray-900 text-white"
           >
             <span className="md:hidden text-2xl" aria-hidden="true">⌕</span>
             <span className="hidden md:inline">SEARCH</span>
@@ -77,7 +81,7 @@ export function BrutalistDashboard({ children, currentCategory, categoryCounts =
           <button
             onClick={() => navigate("/notifications")}
             aria-label="Notification history"
-            className={`w-full px-2 md:px-4 py-3 font-bold text-lg transition-colors flex items-center justify-center md:justify-start ${
+            className={`focus-brutal w-full px-2 md:px-4 py-3 font-bold text-lg transition-all duration-200 flex items-center justify-center md:justify-start ${
               location === "/notifications" ? "bg-red-600 text-white" : "hover:bg-gray-900 text-white"
             }`}
           >
@@ -90,14 +94,14 @@ export function BrutalistDashboard({ children, currentCategory, categoryCounts =
               key={cat.name}
               onClick={() => navigate(`/category/${cat.name}`)}
             aria-label={cat.name}
-            className={`w-full px-2 md:px-4 py-3 font-bold text-lg transition-colors flex items-center justify-center md:justify-between gap-3 ${
+              className={`focus-brutal w-full px-2 md:px-4 py-3 font-bold text-lg transition-all duration-200 flex items-center justify-center md:justify-between gap-3 ${
                 currentCategory === cat.name
                   ? "bg-red-600 text-white"
                   : "hover:bg-gray-900 text-white"
               }`}
             >
               <div className="flex items-center gap-3">
-                <span className={`${cat.color} w-8 h-8 flex items-center justify-center text-white font-bold`}>
+                  <span className={`${cat.color} w-8 h-8 flex items-center justify-center text-white font-bold shadow-[3px_3px_0_rgba(255,255,255,0.35)]`}>
                   {cat.icon}
                 </span>
                 <span className="hidden md:inline">{cat.name.toUpperCase()}</span>
@@ -117,6 +121,11 @@ export function BrutalistDashboard({ children, currentCategory, categoryCounts =
           <div className="border-2 border-white p-4">
             <p className="text-xs font-bold tracking-widest text-gray-400">USER</p>
             <p className="text-lg font-bold truncate">{user.name || user.email}</p>
+          </div>
+          <div className="border-l-2 border-red-600 pl-3 py-1">
+            <p className="text-[10px] font-bold tracking-[0.25em] text-gray-500">AUTHOR</p>
+            <p className="text-sm font-bold text-white">MANUS</p>
+            <p className="text-[10px] tracking-widest text-gray-600">SMARTNOTE SCHEDULER</p>
           </div>
           <Button
             onClick={() => logout()}

@@ -123,6 +123,11 @@
     font-family: 'IBM Plex Sans Condensed', sans-serif;
     font-weight: 400;
     letter-spacing: -0.02em;
+    background-image: linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  ::selection {
+    @apply bg-red-600 text-white;
   }
   h1, h2, h3, h4, h5, h6 {
     font-weight: 700;
@@ -179,6 +184,15 @@
   /* Brutalist card styling */
   .card-brutalist {
     @apply bg-black border-2 border-white p-6;
+  }
+
+  .surface-brutalist {
+    @apply bg-black/80 border border-white/20;
+    box-shadow: 8px 8px 0 rgba(220, 38, 38, 0.9);
+  }
+
+  .focus-brutal {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 focus-visible:ring-offset-black;
   }
 
   /* Overdue indicator */

@@ -153,29 +153,36 @@ export default function Home() {
     <BrutalistDashboard categoryCounts={categoryCounts}>
       <div className="bg-black text-white min-h-screen">
         {/* Header */}
-        <div className="border-b-2 border-white p-8">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">CAPTURE</h1>
-          <div className="h-1 bg-red-600 w-24 mb-4"></div>
-          <p className="text-gray-400 text-lg">AI-powered note organization in real-time</p>
+        <div className="relative overflow-hidden border-b-2 border-white p-8 md:p-12 bg-gradient-to-br from-black via-black to-red-950/30">
+          <div className="absolute -right-12 -top-16 text-[10rem] md:text-[16rem] font-bold leading-none text-white/[0.03] select-none" aria-hidden="true">01</div>
+          <div className="relative">
+            <p className="text-red-500 text-xs font-bold tracking-[0.35em] mb-4">AI NOTE OPERATING SYSTEM</p>
+            <h1 className="text-5xl md:text-7xl font-bold mb-4 tracking-tight">CAPTURE<span className="text-red-600">.</span></h1>
+            <div className="h-1 bg-red-600 w-24 mb-4"></div>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+              <p className="text-gray-300 text-lg">Turn raw thoughts into organized action.</p>
+              <span className="text-[10px] font-bold tracking-[0.25em] text-gray-500">AUTHOR / MANUS</span>
+            </div>
+          </div>
         </div>
 
         {/* Stats Widget */}
         {showStats && stats && (
           <div className="border-b-2 border-white p-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-              <div className="border-2 border-white p-4">
+              <div className="surface-brutalist p-4 transition-transform hover:-translate-y-1">
                 <p className="text-xs font-bold tracking-widest text-gray-400">TOTAL</p>
                 <p className="text-4xl font-bold">{stats.total}</p>
               </div>
-              <div className="border-2 border-white p-4">
+              <div className="surface-brutalist p-4 transition-transform hover:-translate-y-1">
                 <p className="text-xs font-bold tracking-widest text-gray-400">COMPLETED</p>
                 <p className="text-4xl font-bold text-green-600">{stats.completed}</p>
               </div>
-              <div className="border-2 border-white p-4">
+              <div className="surface-brutalist p-4 transition-transform hover:-translate-y-1">
                 <p className="text-xs font-bold tracking-widest text-gray-400">PENDING</p>
                 <p className="text-4xl font-bold text-blue-600">{stats.pending}</p>
               </div>
-              <div className="border-2 border-white p-4">
+              <div className="surface-brutalist p-4 transition-transform hover:-translate-y-1">
                 <p className="text-xs font-bold tracking-widest text-gray-400">OVERDUE</p>
                 <p className="text-4xl font-bold text-red-600">{stats.overdue}</p>
               </div>
@@ -191,14 +198,20 @@ export default function Home() {
         )}
 
         {/* Input Section */}
-        <div className="border-b-2 border-white p-8">
-          <h2 className="text-3xl font-bold mb-6">NEW NOTE</h2>
+        <div className="border-b-2 border-white p-8 md:p-12 bg-white/[0.02]">
+          <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
+            <div>
+              <p className="text-red-500 text-xs font-bold tracking-[0.3em] mb-2">INPUT / 01</p>
+              <h2 className="text-3xl font-bold">NEW NOTE</h2>
+            </div>
+            <p className="text-xs text-gray-500 tracking-widest">NATURAL LANGUAGE ENABLED</p>
+          </div>
           <div className="space-y-4">
             <Textarea
               value={noteContent}
               onChange={(e) => handleContentChange(e.target.value)}
               placeholder="Type anything... AI will auto-categorize it"
-              className="bg-gray-900 border-2 border-white text-white placeholder-gray-500 p-4 font-mono"
+              className="focus-brutal bg-gray-950 border-2 border-white text-white placeholder-gray-500 p-4 font-mono min-h-32 transition-colors focus:border-red-600"
               rows={4}
             />
             <NotePreview isAnalyzing={isAnalyzing} preview={preview} />
@@ -206,7 +219,7 @@ export default function Home() {
               <Button
                 onClick={handleCreateNote}
                 disabled={!noteContent.trim() || isSubmitting}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold px-8 py-2"
+                className="focus-brutal bg-red-600 hover:bg-red-500 text-white font-bold px-8 py-3 shadow-[4px_4px_0_rgba(255,255,255,0.7)] hover:shadow-[2px_2px_0_rgba(255,255,255,0.7)] transition-all"
               >
                 {isSubmitting ? (
                   <>
@@ -223,7 +236,7 @@ export default function Home() {
                   setPreview(null);
                 }}
                 variant="outline"
-                className="border-2 border-white text-white hover:bg-gray-900 font-bold"
+                className="focus-brutal border-2 border-white text-white hover:bg-white hover:text-black font-bold px-6 py-3 transition-colors"
               >
                 CLEAR
               </Button>
