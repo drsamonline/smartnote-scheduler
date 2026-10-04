@@ -12,7 +12,7 @@ interface BrutalistDashboardProps {
 
 export function BrutalistDashboard({ children, currentCategory, categoryCounts = {} }: BrutalistDashboardProps) {
   const { user, logout } = useAuth();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
 
   const categories = [
     { name: "Tasks", icon: "✓", color: "bg-blue-600" },
@@ -72,6 +72,17 @@ export function BrutalistDashboard({ children, currentCategory, categoryCounts =
           >
             <span className="md:hidden text-2xl" aria-hidden="true">⌕</span>
             <span className="hidden md:inline">SEARCH</span>
+          </button>
+
+          <button
+            onClick={() => navigate("/notifications")}
+            aria-label="Notification history"
+            className={`w-full px-2 md:px-4 py-3 font-bold text-lg transition-colors flex items-center justify-center md:justify-start ${
+              location === "/notifications" ? "bg-red-600 text-white" : "hover:bg-gray-900 text-white"
+            }`}
+          >
+            <span className="md:hidden text-2xl" aria-hidden="true">◷</span>
+            <span className="hidden md:inline">ALERTS</span>
           </button>
 
           {categories.map((cat) => (

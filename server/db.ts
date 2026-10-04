@@ -1,6 +1,15 @@
 import { and, desc, eq, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, notes, reminders, InsertNote, InsertReminder } from "../drizzle/schema";
+import {
+  InsertUser,
+  users,
+  notes,
+  reminders,
+  notificationLogs,
+  InsertNote,
+  InsertReminder,
+  InsertNotificationLog,
+} from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -87,6 +96,13 @@ export async function getUserByOpenId(openId: string) {
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
 
   return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getUserById(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  return result[0];
 }
 
 /**
@@ -196,6 +212,23 @@ export async function deleteRemindersForNote(noteId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(reminders).where(eq(reminders.noteId, noteId));
+}
+
+export async function createNotificationLog(data: InsertNotificationLog) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.insert(notificationLogs).values(data);
+}
+
+export async function getNotificationHistory(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(notificationLogs)
+    .where(eq(notificationLogs.userId, userId))
+    .orderBy(desc(notificationLogs.createdAt))
+    .limit(100);
 }
 
 /**

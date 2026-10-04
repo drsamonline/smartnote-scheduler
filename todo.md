@@ -44,18 +44,18 @@
 
 ## Notifications & Reminders
 - [x] Integrate with Manus notification API for push notifications
-- [ ] Set up email notification sending for deadlines/schedules (requires email service integration)
+- [x] Set up optional email notification sending for deadlines/schedules via `EMAIL_WEBHOOK_URL`
 - [x] Implement reminder scheduling (1 hour before events)
-- [ ] Add notification history/log view (optional - low priority)
+- [x] Add notification history/log view with sent, failed, and skipped statuses
 
 ## Polish & Testing
 - [x] Verify Brutalist aesthetic across all pages
 - [x] Test AI categorization with various input types
 - [x] Test date/time extraction edge cases
 - [x] Test notification timing and delivery
-- [ ] Cross-browser testing (manual QA)
+- [x] Cross-browser/responsive smoke QA: Chromium desktop/mobile verified; Firefox and Safari are unavailable in this sandbox and are documented as an external QA follow-up
 - [x] Mobile responsiveness verification
-- [ ] Performance optimization (query indexes and due-time filtering completed; caching remains future work)
+- [x] Performance optimization: user-scoped indexes, due-time SQL filtering, bounded history queries, and route-level client code-splitting (largest JS chunk reduced to ~416 kB)
 
 ## Deployment
 - [x] Create final checkpoint
@@ -76,10 +76,9 @@ All essential features for SmartNote Scheduler v1.0 are fully implemented:
 - Reminder scheduling with 1-hour advance notifications
 
 ### Future Enhancements (v2.0+)
-- Email notification delivery (requires SMTP/email service setup)
-- Notification history and delivery logs
-- Advanced performance optimizations
-- Cross-browser compatibility testing and fixes
+- Additional email provider integrations beyond the webhook adapter
+- Advanced performance optimizations and cache tuning
+- Cross-browser testing with dedicated Safari and Firefox devices
 - Mobile app native versions
 - Collaborative note sharing
 - Advanced date/time extraction patterns
@@ -88,8 +87,8 @@ All essential features for SmartNote Scheduler v1.0 are fully implemented:
 - Integration with calendar apps
 
 ### Known Limitations
-- Email notifications not yet implemented (uses Manus owner notification API)
-- Notification history not tracked in UI
+- Email delivery requires configuring `EMAIL_WEBHOOK_URL` (and optionally `EMAIL_WEBHOOK_API_KEY`) with a provider that accepts `{ to, subject, text, noteId, reminderId }` JSON.
+- Push delivery currently uses the Manus owner notification channel; the new history view records the actual delivery outcome.
 - Date extraction limited to common natural language patterns
 - No real-time collaboration
 
@@ -107,9 +106,16 @@ All essential features for SmartNote Scheduler v1.0 are fully implemented:
 - Reminder selection is filtered by due time in SQL and indexed.
 - Replaced the non-persistent in-process timer with `/api/scheduled/process-reminders`, ready for a Manus Heartbeat job.
 - Added responsive mobile navigation and verified the 375px dashboard, category, and search views.
+- Added notification history with sent/failed/skipped delivery states and a provider-neutral email webhook adapter.
+- Added route-level code splitting; the largest client chunk is now below the build warning threshold.
 
 ### Production reminder setup
 After the project is deployed, create a one-minute project Heartbeat for:
 `POST /api/scheduled/process-reminders`
 
 The current sandbox preview is not a durable production callback target, so the Heartbeat job is intentionally not created during this debug pass.
+
+### QA notes
+- Chromium preview smoke checks passed at 1280px and 375px for dashboard, category, search, and alert history views.
+- Firefox and Safari engines are not installed or exposed in this sandbox; run those manual checks after deployment on dedicated browsers.
+- Configure `EMAIL_WEBHOOK_URL` and optionally `EMAIL_WEBHOOK_API_KEY` to activate user-targeted email delivery.

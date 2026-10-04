@@ -66,3 +66,27 @@ export const reminders = mysqlTable("reminders", {
 
 export type Reminder = typeof reminders.$inferSelect;
 export type InsertReminder = typeof reminders.$inferInsert;
+
+/**
+ * Delivery history for reminder notifications. A skipped row is recorded when
+ * an optional channel is not configured, so users can distinguish it from a
+ * successful or failed delivery.
+ */
+export const notificationLogs = mysqlTable("notificationLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id),
+  noteId: int("noteId").references(() => notes.id, { onDelete: "set null" }),
+  reminderId: int("reminderId").references(() => reminders.id, { onDelete: "set null" }),
+  channel: mysqlEnum("channel", ["push", "email"]).notNull(),
+  status: mysqlEnum("status", ["sent", "failed", "skipped"]).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  error: text("error"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  userCreatedIdx: index("notification_logs_user_created_idx").on(table.userId, table.createdAt),
+  noteIdx: index("notification_logs_note_id_idx").on(table.noteId),
+}));
+
+export type NotificationLog = typeof notificationLogs.$inferSelect;
+export type InsertNotificationLog = typeof notificationLogs.$inferInsert;

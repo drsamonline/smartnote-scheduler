@@ -1,9 +1,12 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ENV } from "./_core/env";
 
 const mocks = vi.hoisted(() => ({
   getPendingReminders: vi.fn(),
   markReminderAsSent: vi.fn(),
   getNoteById: vi.fn(),
+  getUserById: vi.fn(),
+  createNotificationLog: vi.fn(),
   notifyOwner: vi.fn(),
 }));
 
@@ -11,6 +14,8 @@ vi.mock("./db", () => ({
   getPendingReminders: mocks.getPendingReminders,
   markReminderAsSent: mocks.markReminderAsSent,
   getNoteById: mocks.getNoteById,
+  getUserById: mocks.getUserById,
+  createNotificationLog: mocks.createNotificationLog,
 }));
 
 vi.mock("./_core/notification", () => ({
@@ -41,6 +46,8 @@ describe("processPendingReminders", () => {
     vi.clearAllMocks();
     mocks.getPendingReminders.mockResolvedValue([reminder]);
     mocks.getNoteById.mockResolvedValue(note);
+    mocks.getUserById.mockResolvedValue({ email: null });
+    mocks.createNotificationLog.mockResolvedValue(undefined);
     mocks.notifyOwner.mockResolvedValue(true);
     mocks.markReminderAsSent.mockResolvedValue(undefined);
   });
@@ -54,6 +61,7 @@ describe("processPendingReminders", () => {
       content: expect.stringContaining("Deadlines due at"),
     });
     expect(mocks.markReminderAsSent).toHaveBeenCalledWith(reminder.id);
+    expect(mocks.createNotificationLog).toHaveBeenCalled();
   });
 
   it("leaves a reminder pending when notification delivery fails", async () => {
@@ -63,4 +71,29 @@ describe("processPendingReminders", () => {
 
     expect(mocks.markReminderAsSent).not.toHaveBeenCalled();
   });
+
+  it("delivers an email reminder when an email webhook is configured", async () => {
+    const emailReminder = { ...reminder, notificationType: "email" as const };
+    mocks.getPendingReminders.mockResolvedValue([emailReminder]);
+    mocks.getUserById.mockResolvedValue({ email: "user@example.com" });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal("fetch", fetchMock);
+    ENV.emailWebhookUrl = "https://email.example.test/send";
+
+    await processPendingReminders();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://email.example.test/send",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining('"to":"user@example.com"'),
+      }),
+    );
+    expect(mocks.markReminderAsSent).toHaveBeenCalledWith(emailReminder.id);
+  });
+});
+
+afterEach(() => {
+  ENV.emailWebhookUrl = "";
+  vi.unstubAllGlobals();
 });

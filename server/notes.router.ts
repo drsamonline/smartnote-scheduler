@@ -6,6 +6,7 @@ import {
   getNoteById,
   getNotesByCategory,
   getNoteStats,
+  getNotificationHistory,
   getUserNotes,
   updateNote,
   createReminder,
@@ -169,6 +170,10 @@ export const notesRouter = router({
    */
   stats: protectedProcedure.query(async ({ ctx }) => {
     return getNoteStats(ctx.user.id);
+  }),
+
+  notificationHistory: protectedProcedure.query(async ({ ctx }) => {
+    return getNotificationHistory(ctx.user.id);
   }),
 
   /**
