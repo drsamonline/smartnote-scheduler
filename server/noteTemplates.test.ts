@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { noteTemplates, reorderTemplates } from "../client/src/data/noteTemplates";
+import { noteTemplates, reorderTemplates, updateTemplate } from "../client/src/data/noteTemplates";
 
 describe("noteTemplates", () => {
   it("contains 25 unique templates across the five note categories", () => {
@@ -23,5 +23,11 @@ describe("noteTemplates", () => {
     const reordered = reorderTemplates(templates, templates[0].id, templates[2].id);
     expect(reordered.map((template) => template.id)).toEqual([templates[1].id, templates[2].id, templates[0].id]);
     expect(reorderTemplates(templates, "missing", templates[1].id)).toBe(templates);
+  });
+
+  it("updates a template without changing its position", () => {
+    const templates = noteTemplates.slice(0, 2);
+    const updated = { ...templates[0], title: "Renamed" };
+    expect(updateTemplate(templates, updated).map((template) => template.title)).toEqual(["Renamed", templates[1].title]);
   });
 });

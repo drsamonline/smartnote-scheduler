@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { notesToCsv, notesToMarkdown } from "../client/src/lib/noteExports";
+import { filterNotes, notesToCsv, notesToMarkdown } from "../client/src/lib/noteExports";
 
 const notes = [{
   title: "Project, launch",
@@ -26,5 +26,11 @@ describe("note exports", () => {
     expect(markdown).toContain("## 1. Project, launch");
     expect(markdown).toContain("- **Category:** Tasks");
     expect(markdown).toContain("Ship it\nwith a checklist");
+  });
+
+  it("filters notes by category and inclusive created date range", () => {
+    const second = { ...notes[0], title: "Learning note", category: "Learning", createdAt: "2026-10-12T10:00:00.000Z" };
+    expect(filterNotes([notes[0], second], { category: "Tasks", startDate: "2026-10-01", endDate: "2026-10-10" })).toHaveLength(1);
+    expect(filterNotes([notes[0], second], { category: "All", startDate: "2026-10-01", endDate: "2026-10-12" })).toHaveLength(2);
   });
 });

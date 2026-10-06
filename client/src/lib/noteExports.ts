@@ -1,4 +1,5 @@
 export type ExportableNote = {
+  id?: number;
   title: string;
   content: string;
   category: string;
@@ -8,6 +9,25 @@ export type ExportableNote = {
   scheduledDate?: Date | string | null;
   createdAt?: Date | string | null;
 };
+
+export type ExportFilters = {
+  category?: string;
+  startDate?: string;
+  endDate?: string;
+};
+
+export function filterNotes(notes: ExportableNote[], filters: ExportFilters) {
+  const start = filters.startDate ? new Date(`${filters.startDate}T00:00:00`) : null;
+  const end = filters.endDate ? new Date(`${filters.endDate}T23:59:59.999`) : null;
+  return notes.filter((note) => {
+    if (filters.category && filters.category !== "All" && note.category !== filters.category) return false;
+    if (!start && !end) return true;
+    if (!note.createdAt) return false;
+    const created = note.createdAt instanceof Date ? note.createdAt : new Date(note.createdAt);
+    if (Number.isNaN(created.getTime())) return false;
+    return (!start || created >= start) && (!end || created <= end);
+  });
+}
 
 function formatDate(value?: Date | string | null) {
   if (!value) return "";

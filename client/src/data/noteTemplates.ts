@@ -36,6 +36,10 @@ export function reorderTemplates(templates: NoteTemplate[], sourceId: string, ta
   return next;
 }
 
+export function updateTemplate(templates: NoteTemplate[], updated: NoteTemplate) {
+  return templates.map((template) => template.id === updated.id ? updated : template);
+}
+
 export const noteTemplates: NoteTemplate[] = [
   { id: "daily-plan", title: "Daily Plan", description: "Plan the day", category: "Tasks", content: "Today's priorities:\n1. \n2. \n3. " },
   { id: "task-breakdown", title: "Task Breakdown", description: "Turn a goal into steps", category: "Tasks", content: "Goal: \nNext action: \nSupporting steps:\n- " },

@@ -3,10 +3,11 @@ import { BrutalistDashboard } from "@/components/BrutalistDashboard";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { loadPreferences, savePreferences, type AppPreferences, type SortPreference } from "@/lib/preferences";
-import { loadCustomTemplates, reorderTemplates, saveCustomTemplates, type NoteTemplate } from "@/data/noteTemplates";
+import { loadCustomTemplates, reorderTemplates, saveCustomTemplates, updateTemplate, type NoteTemplate } from "@/data/noteTemplates";
 import { trpc } from "@/lib/trpc";
 import { useTheme } from "@/contexts/ThemeContext";
-import { notesToCsv, notesToMarkdown } from "@/lib/noteExports";
+import { filterNotes, notesToCsv, notesToMarkdown } from "@/lib/noteExports";
+import { Streamdown } from "streamdown";
 
 const shortcuts = [
   ["N", "Focus the new-note composer"],
@@ -28,8 +29,13 @@ export default function Settings() {
   const [templateCategory, setTemplateCategory] = useState<NoteTemplate["category"]>("Tasks");
   const [templateContent, setTemplateContent] = useState("");
   const [templateSaved, setTemplateSaved] = useState(false);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [backupMessage, setBackupMessage] = useState("");
   const [draggedTemplateId, setDraggedTemplateId] = useState<string | null>(null);
+  const [exportCategory, setExportCategory] = useState("All");
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
+  const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: notes = [] } = trpc.notes.list.useQuery();
   const importBackup = trpc.notes.importBackup.useMutation({
@@ -60,18 +66,33 @@ export default function Settings() {
   const addCustomTemplate = () => {
     if (!templateTitle.trim() || !templateContent.trim()) return;
     const template: NoteTemplate = {
-      id: `custom-${Date.now()}`,
+      id: editingTemplateId || `custom-${Date.now()}`,
       title: templateTitle.trim(),
       description: "Custom template",
       category: templateCategory,
       content: templateContent.trim(),
     };
-    const next = [...customTemplates, template];
+    const next = editingTemplateId ? updateTemplate(customTemplates, template) : [...customTemplates, template];
     setCustomTemplates(next);
     saveCustomTemplates(next);
     setTemplateTitle("");
     setTemplateContent("");
+    setEditingTemplateId(null);
     setTemplateSaved(true);
+  };
+
+  const startEditingTemplate = (template: NoteTemplate) => {
+    setEditingTemplateId(template.id);
+    setTemplateTitle(template.title);
+    setTemplateCategory(template.category);
+    setTemplateContent(template.content);
+    setTemplateSaved(false);
+  };
+
+  const cancelEditingTemplate = () => {
+    setEditingTemplateId(null);
+    setTemplateTitle("");
+    setTemplateContent("");
   };
 
   const removeCustomTemplate = (id: string) => {
@@ -98,14 +119,19 @@ export default function Settings() {
   };
 
   const handleCsvExport = () => {
-    downloadFile(notesToCsv(notes), `smartnote-notes-${new Date().toISOString().slice(0, 10)}.csv`, "text/csv;charset=utf-8");
-    setBackupMessage(`${notes.length} notes exported as CSV.`);
+    const filtered = filterNotes(notes, { category: exportCategory, startDate: exportStartDate, endDate: exportEndDate });
+    downloadFile(notesToCsv(filtered), `smartnote-notes-${new Date().toISOString().slice(0, 10)}.csv`, "text/csv;charset=utf-8");
+    setBackupMessage(`${filtered.length} of ${notes.length} notes exported as CSV.`);
   };
 
   const handleMarkdownExport = () => {
-    downloadFile(notesToMarkdown(notes), `smartnote-notes-${new Date().toISOString().slice(0, 10)}.md`, "text/markdown;charset=utf-8");
-    setBackupMessage(`${notes.length} notes exported as Markdown.`);
+    const filtered = filterNotes(notes, { category: exportCategory, startDate: exportStartDate, endDate: exportEndDate });
+    downloadFile(notesToMarkdown(filtered), `smartnote-notes-${new Date().toISOString().slice(0, 10)}.md`, "text/markdown;charset=utf-8");
+    setBackupMessage(`${filtered.length} of ${notes.length} notes exported as Markdown.`);
   };
+
+  const filteredNotes = filterNotes(notes, { category: exportCategory, startDate: exportStartDate, endDate: exportEndDate });
+  const markdownPreview = notesToMarkdown(filteredNotes);
 
   const handleExport = () => {
     const payload = {
@@ -198,15 +224,17 @@ export default function Settings() {
               <select value={templateCategory} onChange={(e) => setTemplateCategory(e.target.value as NoteTemplate["category"])} className="bg-gray-950 border-2 border-white p-3 text-white">{categories.map((category) => <option key={category}>{category}</option>)}</select>
               <textarea value={templateContent} onChange={(e) => setTemplateContent(e.target.value)} placeholder="Starter content" rows={3} className="bg-gray-950 border-2 border-white p-3 text-white placeholder-gray-600 md:col-span-3" />
             </div>
-            <Button onClick={addCustomTemplate} className="mt-4 bg-red-600 hover:bg-red-500 font-bold">{templateSaved ? "ADD ANOTHER TEMPLATE" : "SAVE CUSTOM TEMPLATE"}</Button>
-            {customTemplates.length > 0 && <div className="mt-6 space-y-2"><p className="text-[10px] tracking-[0.25em] text-gray-500">DRAG TO REORDER</p>{customTemplates.map((template) => <div key={template.id} draggable onDragStart={() => setDraggedTemplateId(template.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => reorderCustomTemplate(template.id)} onDragEnd={() => setDraggedTemplateId(null)} className={`flex items-center justify-between gap-4 border border-white/20 p-3 transition-opacity ${draggedTemplateId === template.id ? "opacity-40" : ""}`}><span className="flex items-center gap-3"><span aria-hidden="true" className="cursor-grab text-gray-500">⋮⋮</span><span><strong>{template.title}</strong><span className="ml-3 text-xs text-gray-500">{template.category}</span></span></span><Button onClick={() => removeCustomTemplate(template.id)} variant="outline" className="border-white text-xs">REMOVE</Button></div>)}</div>}
+            <div className="flex gap-3 mt-4"><Button onClick={addCustomTemplate} className="bg-red-600 hover:bg-red-500 font-bold">{editingTemplateId ? "SAVE TEMPLATE CHANGES" : templateSaved ? "ADD ANOTHER TEMPLATE" : "SAVE CUSTOM TEMPLATE"}</Button>{editingTemplateId && <Button onClick={cancelEditingTemplate} variant="outline" className="border-white font-bold">CANCEL</Button>}</div>
+            {customTemplates.length > 0 && <div className="mt-6 space-y-2"><p className="text-[10px] tracking-[0.25em] text-gray-500">DRAG TO REORDER</p>{customTemplates.map((template) => <div key={template.id} draggable onDragStart={() => setDraggedTemplateId(template.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => reorderCustomTemplate(template.id)} onDragEnd={() => setDraggedTemplateId(null)} className={`flex items-center justify-between gap-4 border border-white/20 p-3 transition-opacity ${draggedTemplateId === template.id ? "opacity-40" : ""}`}><span className="flex items-center gap-3"><span aria-hidden="true" className="cursor-grab text-gray-500">⋮⋮</span><span><strong>{template.title}</strong><span className="ml-3 text-xs text-gray-500">{template.category}</span></span></span><span className="flex gap-2"><Button onClick={() => startEditingTemplate(template)} variant="outline" className="border-white text-xs">EDIT</Button><Button onClick={() => removeCustomTemplate(template.id)} variant="outline" className="border-white text-xs">REMOVE</Button></span></div>)}</div>}
           </section>
 
           <section className="border-2 border-white p-6 md:p-8">
             <p className="text-red-500 text-xs font-bold tracking-[0.3em] mb-2">BACKUP / 03</p>
             <h2 className="text-3xl font-bold mb-2">EXPORT / IMPORT</h2>
-            <p className="text-gray-500 mb-6">Back up notes, preferences, and custom templates as one JSON file.</p>
-            <div className="flex flex-wrap gap-3"><Button onClick={handleExport} className="bg-red-600 hover:bg-red-500 font-bold">EXPORT BACKUP</Button><Button onClick={handleCsvExport} variant="outline" className="border-2 border-white font-bold">EXPORT CSV</Button><Button onClick={handleMarkdownExport} variant="outline" className="border-2 border-white font-bold">EXPORT MARKDOWN</Button><Button onClick={() => fileInputRef.current?.click()} variant="outline" className="border-2 border-white font-bold">IMPORT BACKUP</Button><input ref={fileInputRef} type="file" accept="application/json" onChange={handleImport} className="hidden" /></div>
+            <p className="text-gray-500 mb-6">Back up notes, preferences, and custom templates as one JSON file, or export a filtered CSV/Markdown view.</p>
+            <div className="grid gap-3 md:grid-cols-3 mb-5"><label className="text-xs tracking-widest text-gray-500">CATEGORY<select value={exportCategory} onChange={(e) => setExportCategory(e.target.value)} className="mt-2 block w-full bg-gray-950 border-2 border-white p-3 text-white"><option>All</option>{categories.map((category) => <option key={category}>{category}</option>)}</select></label><label className="text-xs tracking-widest text-gray-500">FROM<input type="date" value={exportStartDate} onChange={(e) => setExportStartDate(e.target.value)} className="mt-2 block w-full bg-gray-950 border-2 border-white p-3 text-white" /></label><label className="text-xs tracking-widest text-gray-500">TO<input type="date" value={exportEndDate} onChange={(e) => setExportEndDate(e.target.value)} className="mt-2 block w-full bg-gray-950 border-2 border-white p-3 text-white" /></label></div>
+            <p className="text-xs text-gray-500 mb-4">FILTERED NOTES: {filteredNotes.length} / {notes.length}</p><div className="flex flex-wrap gap-3"><Button onClick={handleExport} className="bg-red-600 hover:bg-red-500 font-bold">EXPORT BACKUP</Button><Button onClick={handleCsvExport} variant="outline" className="border-2 border-white font-bold">EXPORT CSV</Button><Button onClick={handleMarkdownExport} variant="outline" className="border-2 border-white font-bold">EXPORT MARKDOWN</Button><Button onClick={() => setShowMarkdownPreview((value) => !value)} variant="outline" className="border-2 border-white font-bold">{showMarkdownPreview ? "HIDE PREVIEW" : "PREVIEW MARKDOWN"}</Button><Button onClick={() => fileInputRef.current?.click()} variant="outline" className="border-2 border-white font-bold">IMPORT BACKUP</Button><input ref={fileInputRef} type="file" accept="application/json" onChange={handleImport} className="hidden" /></div>
+            {showMarkdownPreview && <div className="mt-6 border-2 border-red-600 bg-white text-black p-6 max-h-[30rem] overflow-auto prose prose-sm max-w-none"><Streamdown>{markdownPreview}</Streamdown></div>}
             {backupMessage && <p className="mt-4 text-sm text-gray-300 border-l-2 border-red-600 pl-3">{backupMessage}</p>}
           </section>
 
