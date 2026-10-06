@@ -25,6 +25,17 @@ export function saveCustomTemplates(templates: NoteTemplate[]) {
   }
 }
 
+export function reorderTemplates(templates: NoteTemplate[], sourceId: string, targetId: string) {
+  if (sourceId === targetId) return templates;
+  const sourceIndex = templates.findIndex((template) => template.id === sourceId);
+  const targetIndex = templates.findIndex((template) => template.id === targetId);
+  if (sourceIndex < 0 || targetIndex < 0) return templates;
+  const next = [...templates];
+  const [moved] = next.splice(sourceIndex, 1);
+  next.splice(targetIndex, 0, moved);
+  return next;
+}
+
 export const noteTemplates: NoteTemplate[] = [
   { id: "daily-plan", title: "Daily Plan", description: "Plan the day", category: "Tasks", content: "Today's priorities:\n1. \n2. \n3. " },
   { id: "task-breakdown", title: "Task Breakdown", description: "Turn a goal into steps", category: "Tasks", content: "Goal: \nNext action: \nSupporting steps:\n- " },

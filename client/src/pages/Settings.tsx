@@ -3,9 +3,10 @@ import { BrutalistDashboard } from "@/components/BrutalistDashboard";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { loadPreferences, savePreferences, type AppPreferences, type SortPreference } from "@/lib/preferences";
-import { loadCustomTemplates, saveCustomTemplates, type NoteTemplate } from "@/data/noteTemplates";
+import { loadCustomTemplates, reorderTemplates, saveCustomTemplates, type NoteTemplate } from "@/data/noteTemplates";
 import { trpc } from "@/lib/trpc";
 import { useTheme } from "@/contexts/ThemeContext";
+import { notesToCsv, notesToMarkdown } from "@/lib/noteExports";
 
 const shortcuts = [
   ["N", "Focus the new-note composer"],
@@ -28,6 +29,7 @@ export default function Settings() {
   const [templateContent, setTemplateContent] = useState("");
   const [templateSaved, setTemplateSaved] = useState(false);
   const [backupMessage, setBackupMessage] = useState("");
+  const [draggedTemplateId, setDraggedTemplateId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: notes = [] } = trpc.notes.list.useQuery();
   const importBackup = trpc.notes.importBackup.useMutation({
@@ -76,6 +78,33 @@ export default function Settings() {
     const next = customTemplates.filter((template) => template.id !== id);
     setCustomTemplates(next);
     saveCustomTemplates(next);
+  };
+
+  const reorderCustomTemplate = (targetId: string) => {
+    if (!draggedTemplateId || draggedTemplateId === targetId) return;
+    const next = reorderTemplates(customTemplates, draggedTemplateId, targetId);
+    setCustomTemplates(next);
+    saveCustomTemplates(next);
+    setDraggedTemplateId(null);
+  };
+
+  const downloadFile = (content: string, filename: string, mimeType: string) => {
+    const url = URL.createObjectURL(new Blob([content], { type: mimeType }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCsvExport = () => {
+    downloadFile(notesToCsv(notes), `smartnote-notes-${new Date().toISOString().slice(0, 10)}.csv`, "text/csv;charset=utf-8");
+    setBackupMessage(`${notes.length} notes exported as CSV.`);
+  };
+
+  const handleMarkdownExport = () => {
+    downloadFile(notesToMarkdown(notes), `smartnote-notes-${new Date().toISOString().slice(0, 10)}.md`, "text/markdown;charset=utf-8");
+    setBackupMessage(`${notes.length} notes exported as Markdown.`);
   };
 
   const handleExport = () => {
@@ -170,14 +199,14 @@ export default function Settings() {
               <textarea value={templateContent} onChange={(e) => setTemplateContent(e.target.value)} placeholder="Starter content" rows={3} className="bg-gray-950 border-2 border-white p-3 text-white placeholder-gray-600 md:col-span-3" />
             </div>
             <Button onClick={addCustomTemplate} className="mt-4 bg-red-600 hover:bg-red-500 font-bold">{templateSaved ? "ADD ANOTHER TEMPLATE" : "SAVE CUSTOM TEMPLATE"}</Button>
-            {customTemplates.length > 0 && <div className="mt-6 space-y-2">{customTemplates.map((template) => <div key={template.id} className="flex items-center justify-between gap-4 border border-white/20 p-3"><span><strong>{template.title}</strong><span className="ml-3 text-xs text-gray-500">{template.category}</span></span><Button onClick={() => removeCustomTemplate(template.id)} variant="outline" className="border-white text-xs">REMOVE</Button></div>)}</div>}
+            {customTemplates.length > 0 && <div className="mt-6 space-y-2"><p className="text-[10px] tracking-[0.25em] text-gray-500">DRAG TO REORDER</p>{customTemplates.map((template) => <div key={template.id} draggable onDragStart={() => setDraggedTemplateId(template.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => reorderCustomTemplate(template.id)} onDragEnd={() => setDraggedTemplateId(null)} className={`flex items-center justify-between gap-4 border border-white/20 p-3 transition-opacity ${draggedTemplateId === template.id ? "opacity-40" : ""}`}><span className="flex items-center gap-3"><span aria-hidden="true" className="cursor-grab text-gray-500">⋮⋮</span><span><strong>{template.title}</strong><span className="ml-3 text-xs text-gray-500">{template.category}</span></span></span><Button onClick={() => removeCustomTemplate(template.id)} variant="outline" className="border-white text-xs">REMOVE</Button></div>)}</div>}
           </section>
 
           <section className="border-2 border-white p-6 md:p-8">
             <p className="text-red-500 text-xs font-bold tracking-[0.3em] mb-2">BACKUP / 03</p>
             <h2 className="text-3xl font-bold mb-2">EXPORT / IMPORT</h2>
             <p className="text-gray-500 mb-6">Back up notes, preferences, and custom templates as one JSON file.</p>
-            <div className="flex flex-wrap gap-3"><Button onClick={handleExport} className="bg-red-600 hover:bg-red-500 font-bold">EXPORT BACKUP</Button><Button onClick={() => fileInputRef.current?.click()} variant="outline" className="border-2 border-white font-bold">IMPORT BACKUP</Button><input ref={fileInputRef} type="file" accept="application/json" onChange={handleImport} className="hidden" /></div>
+            <div className="flex flex-wrap gap-3"><Button onClick={handleExport} className="bg-red-600 hover:bg-red-500 font-bold">EXPORT BACKUP</Button><Button onClick={handleCsvExport} variant="outline" className="border-2 border-white font-bold">EXPORT CSV</Button><Button onClick={handleMarkdownExport} variant="outline" className="border-2 border-white font-bold">EXPORT MARKDOWN</Button><Button onClick={() => fileInputRef.current?.click()} variant="outline" className="border-2 border-white font-bold">IMPORT BACKUP</Button><input ref={fileInputRef} type="file" accept="application/json" onChange={handleImport} className="hidden" /></div>
             {backupMessage && <p className="mt-4 text-sm text-gray-300 border-l-2 border-red-600 pl-3">{backupMessage}</p>}
           </section>
 

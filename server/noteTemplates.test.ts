@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { noteTemplates } from "../client/src/data/noteTemplates";
+import { noteTemplates, reorderTemplates } from "../client/src/data/noteTemplates";
 
 describe("noteTemplates", () => {
   it("contains 25 unique templates across the five note categories", () => {
@@ -16,5 +16,12 @@ describe("noteTemplates", () => {
       expect(template.description.length).toBeGreaterThan(0);
       expect(template.content.length).toBeGreaterThan(10);
     }
+  });
+
+  it("moves a dragged custom template to the drop target", () => {
+    const templates = noteTemplates.slice(0, 3);
+    const reordered = reorderTemplates(templates, templates[0].id, templates[2].id);
+    expect(reordered.map((template) => template.id)).toEqual([templates[1].id, templates[2].id, templates[0].id]);
+    expect(reorderTemplates(templates, "missing", templates[1].id)).toBe(templates);
   });
 });
