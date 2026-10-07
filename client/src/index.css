@@ -261,3 +261,10 @@
     }
   }
 }
+
+@media print {
+  body * { visibility: hidden !important; }
+  .markdown-print-preview, .markdown-print-preview * { visibility: visible !important; }
+  .markdown-print-preview { position: absolute; inset: 0; max-height: none !important; overflow: visible !important; border: 0 !important; color: #000 !important; background: #fff !important; }
+  .markdown-print-preview button { display: none !important; }
+}

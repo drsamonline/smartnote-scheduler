@@ -3,11 +3,10 @@ import { BrutalistDashboard } from "@/components/BrutalistDashboard";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { loadPreferences, savePreferences, type AppPreferences, type SortPreference } from "@/lib/preferences";
-import { loadCustomTemplates, reorderTemplates, saveCustomTemplates, updateTemplate, type NoteTemplate } from "@/data/noteTemplates";
+import { filterTemplates, loadCustomTemplates, reorderTemplates, saveCustomTemplates, updateTemplate, type NoteTemplate } from "@/data/noteTemplates";
 import { trpc } from "@/lib/trpc";
 import { useTheme } from "@/contexts/ThemeContext";
 import { filterNotes, notesToCsv, notesToMarkdown } from "@/lib/noteExports";
-import { Streamdown } from "streamdown";
 
 const shortcuts = [
   ["N", "Focus the new-note composer"],
@@ -19,6 +18,15 @@ const shortcuts = [
 ];
 
 const categories = ["Tasks", "Deadlines", "Schedule", "Thoughts", "Learning"] as const;
+type ExportPreset = { name: string; category: string; startDate: string; endDate: string };
+const PRESETS_KEY = "smartnote.export-presets";
+
+function loadExportPresets(): ExportPreset[] {
+  try {
+    const stored = typeof window !== "undefined" ? JSON.parse(window.localStorage.getItem(PRESETS_KEY) || "[]") : [];
+    return Array.isArray(stored) ? stored : [];
+  } catch { return []; }
+}
 
 export default function Settings() {
   const { theme, toggleTheme } = useTheme();
@@ -36,6 +44,10 @@ export default function Settings() {
   const [exportStartDate, setExportStartDate] = useState("");
   const [exportEndDate, setExportEndDate] = useState("");
   const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
+  const [templateSearch, setTemplateSearch] = useState("");
+  const [templateFilterCategory, setTemplateFilterCategory] = useState("All");
+  const [exportPresets, setExportPresets] = useState<ExportPreset[]>(() => loadExportPresets());
+  const [presetName, setPresetName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: notes = [] } = trpc.notes.list.useQuery();
   const importBackup = trpc.notes.importBackup.useMutation({
@@ -109,6 +121,26 @@ export default function Settings() {
     setDraggedTemplateId(null);
   };
 
+  const saveExportPreset = () => {
+    if (!presetName.trim()) return;
+    const next = [...exportPresets.filter((preset) => preset.name !== presetName.trim()), { name: presetName.trim(), category: exportCategory, startDate: exportStartDate, endDate: exportEndDate }];
+    setExportPresets(next);
+    window.localStorage.setItem(PRESETS_KEY, JSON.stringify(next));
+    setPresetName("");
+  };
+
+  const applyExportPreset = (preset: ExportPreset) => {
+    setExportCategory(preset.category);
+    setExportStartDate(preset.startDate);
+    setExportEndDate(preset.endDate);
+  };
+
+  const removeExportPreset = (name: string) => {
+    const next = exportPresets.filter((preset) => preset.name !== name);
+    setExportPresets(next);
+    window.localStorage.setItem(PRESETS_KEY, JSON.stringify(next));
+  };
+
   const downloadFile = (content: string, filename: string, mimeType: string) => {
     const url = URL.createObjectURL(new Blob([content], { type: mimeType }));
     const anchor = document.createElement("a");
@@ -132,6 +164,7 @@ export default function Settings() {
 
   const filteredNotes = filterNotes(notes, { category: exportCategory, startDate: exportStartDate, endDate: exportEndDate });
   const markdownPreview = notesToMarkdown(filteredNotes);
+  const visibleTemplates = filterTemplates(customTemplates, templateSearch, templateFilterCategory);
 
   const handleExport = () => {
     const payload = {
@@ -225,7 +258,7 @@ export default function Settings() {
               <textarea value={templateContent} onChange={(e) => setTemplateContent(e.target.value)} placeholder="Starter content" rows={3} className="bg-gray-950 border-2 border-white p-3 text-white placeholder-gray-600 md:col-span-3" />
             </div>
             <div className="flex gap-3 mt-4"><Button onClick={addCustomTemplate} className="bg-red-600 hover:bg-red-500 font-bold">{editingTemplateId ? "SAVE TEMPLATE CHANGES" : templateSaved ? "ADD ANOTHER TEMPLATE" : "SAVE CUSTOM TEMPLATE"}</Button>{editingTemplateId && <Button onClick={cancelEditingTemplate} variant="outline" className="border-white font-bold">CANCEL</Button>}</div>
-            {customTemplates.length > 0 && <div className="mt-6 space-y-2"><p className="text-[10px] tracking-[0.25em] text-gray-500">DRAG TO REORDER</p>{customTemplates.map((template) => <div key={template.id} draggable onDragStart={() => setDraggedTemplateId(template.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => reorderCustomTemplate(template.id)} onDragEnd={() => setDraggedTemplateId(null)} className={`flex items-center justify-between gap-4 border border-white/20 p-3 transition-opacity ${draggedTemplateId === template.id ? "opacity-40" : ""}`}><span className="flex items-center gap-3"><span aria-hidden="true" className="cursor-grab text-gray-500">⋮⋮</span><span><strong>{template.title}</strong><span className="ml-3 text-xs text-gray-500">{template.category}</span></span></span><span className="flex gap-2"><Button onClick={() => startEditingTemplate(template)} variant="outline" className="border-white text-xs">EDIT</Button><Button onClick={() => removeCustomTemplate(template.id)} variant="outline" className="border-white text-xs">REMOVE</Button></span></div>)}</div>}
+            {customTemplates.length > 0 && <div className="mt-6 space-y-2"><div className="flex flex-wrap gap-3"><input value={templateSearch} onChange={(event) => setTemplateSearch(event.target.value)} placeholder="Search custom templates" className="flex-1 min-w-48 bg-gray-950 border-2 border-white p-3 text-white placeholder-gray-600" /><select value={templateFilterCategory} onChange={(event) => setTemplateFilterCategory(event.target.value)} className="bg-gray-950 border-2 border-white p-3 text-white"><option>All</option>{categories.map((category) => <option key={category}>{category}</option>)}</select></div><p className="text-[10px] tracking-[0.25em] text-gray-500">DRAG TO REORDER · SHOWING {visibleTemplates.length}</p>{visibleTemplates.map((template) => <div key={template.id} draggable onDragStart={() => setDraggedTemplateId(template.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => reorderCustomTemplate(template.id)} onDragEnd={() => setDraggedTemplateId(null)} className={`flex items-center justify-between gap-4 border border-white/20 p-3 transition-opacity ${draggedTemplateId === template.id ? "opacity-40" : ""}`}><span className="flex items-center gap-3"><span aria-hidden="true" className="cursor-grab text-gray-500">⋮⋮</span><span><strong>{template.title}</strong><span className="ml-3 text-xs text-gray-500">{template.category}</span></span></span><span className="flex gap-2"><Button onClick={() => startEditingTemplate(template)} variant="outline" className="border-white text-xs">EDIT</Button><Button onClick={() => removeCustomTemplate(template.id)} variant="outline" className="border-white text-xs">REMOVE</Button></span></div>)}</div>}
           </section>
 
           <section className="border-2 border-white p-6 md:p-8">
@@ -233,8 +266,8 @@ export default function Settings() {
             <h2 className="text-3xl font-bold mb-2">EXPORT / IMPORT</h2>
             <p className="text-gray-500 mb-6">Back up notes, preferences, and custom templates as one JSON file, or export a filtered CSV/Markdown view.</p>
             <div className="grid gap-3 md:grid-cols-3 mb-5"><label className="text-xs tracking-widest text-gray-500">CATEGORY<select value={exportCategory} onChange={(e) => setExportCategory(e.target.value)} className="mt-2 block w-full bg-gray-950 border-2 border-white p-3 text-white"><option>All</option>{categories.map((category) => <option key={category}>{category}</option>)}</select></label><label className="text-xs tracking-widest text-gray-500">FROM<input type="date" value={exportStartDate} onChange={(e) => setExportStartDate(e.target.value)} className="mt-2 block w-full bg-gray-950 border-2 border-white p-3 text-white" /></label><label className="text-xs tracking-widest text-gray-500">TO<input type="date" value={exportEndDate} onChange={(e) => setExportEndDate(e.target.value)} className="mt-2 block w-full bg-gray-950 border-2 border-white p-3 text-white" /></label></div>
-            <p className="text-xs text-gray-500 mb-4">FILTERED NOTES: {filteredNotes.length} / {notes.length}</p><div className="flex flex-wrap gap-3"><Button onClick={handleExport} className="bg-red-600 hover:bg-red-500 font-bold">EXPORT BACKUP</Button><Button onClick={handleCsvExport} variant="outline" className="border-2 border-white font-bold">EXPORT CSV</Button><Button onClick={handleMarkdownExport} variant="outline" className="border-2 border-white font-bold">EXPORT MARKDOWN</Button><Button onClick={() => setShowMarkdownPreview((value) => !value)} variant="outline" className="border-2 border-white font-bold">{showMarkdownPreview ? "HIDE PREVIEW" : "PREVIEW MARKDOWN"}</Button><Button onClick={() => fileInputRef.current?.click()} variant="outline" className="border-2 border-white font-bold">IMPORT BACKUP</Button><input ref={fileInputRef} type="file" accept="application/json" onChange={handleImport} className="hidden" /></div>
-            {showMarkdownPreview && <div className="mt-6 border-2 border-red-600 bg-white text-black p-6 max-h-[30rem] overflow-auto prose prose-sm max-w-none"><Streamdown>{markdownPreview}</Streamdown></div>}
+            <p className="text-xs text-gray-500 mb-4">FILTERED NOTES: {filteredNotes.length} / {notes.length}</p><div className="flex flex-wrap gap-3"><Button onClick={handleExport} className="bg-red-600 hover:bg-red-500 font-bold">EXPORT BACKUP</Button><Button onClick={handleCsvExport} variant="outline" className="border-2 border-white font-bold">EXPORT CSV</Button><Button onClick={handleMarkdownExport} variant="outline" className="border-2 border-white font-bold">EXPORT MARKDOWN</Button><Button onClick={() => setShowMarkdownPreview((value) => !value)} variant="outline" className="border-2 border-white font-bold">{showMarkdownPreview ? "HIDE PREVIEW" : "PREVIEW MARKDOWN"}</Button><Button onClick={() => fileInputRef.current?.click()} variant="outline" className="border-2 border-white font-bold">IMPORT BACKUP</Button><input ref={fileInputRef} type="file" accept="application/json" onChange={handleImport} className="hidden" /></div><div className="flex flex-wrap gap-2 mt-4"><input value={presetName} onChange={(event) => setPresetName(event.target.value)} placeholder="Preset name" className="bg-gray-950 border border-white/50 p-2 text-white placeholder-gray-600" /><Button onClick={saveExportPreset} variant="outline" className="border-white text-xs">SAVE FILTER PRESET</Button>{exportPresets.map((preset) => <span key={preset.name} className="inline-flex gap-1"><Button onClick={() => applyExportPreset(preset)} variant="outline" className="border-red-600 text-xs">{preset.name}</Button><button onClick={() => removeExportPreset(preset.name)} aria-label={`Remove ${preset.name}`} className="border border-white/40 px-2 text-xs">×</button></span>)}</div>
+            {showMarkdownPreview && <div className="markdown-print-preview mt-6 border-2 border-red-600 bg-white text-black p-6 max-h-[30rem] overflow-auto"><div className="flex justify-end mb-3"><Button onClick={() => window.print()} variant="outline" className="border-black text-black text-xs">PRINT PREVIEW</Button></div><pre className="whitespace-pre-wrap font-sans text-sm leading-7">{markdownPreview}</pre></div>}
             {backupMessage && <p className="mt-4 text-sm text-gray-300 border-l-2 border-red-600 pl-3">{backupMessage}</p>}
           </section>
 

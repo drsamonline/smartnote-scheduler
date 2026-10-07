@@ -40,6 +40,11 @@ export function updateTemplate(templates: NoteTemplate[], updated: NoteTemplate)
   return templates.map((template) => template.id === updated.id ? updated : template);
 }
 
+export function filterTemplates(templates: NoteTemplate[], query: string, category: string) {
+  const normalizedQuery = query.trim().toLowerCase();
+  return templates.filter((template) => (category === "All" || template.category === category) && template.title.toLowerCase().includes(normalizedQuery));
+}
+
 export const noteTemplates: NoteTemplate[] = [
   { id: "daily-plan", title: "Daily Plan", description: "Plan the day", category: "Tasks", content: "Today's priorities:\n1. \n2. \n3. " },
   { id: "task-breakdown", title: "Task Breakdown", description: "Turn a goal into steps", category: "Tasks", content: "Goal: \nNext action: \nSupporting steps:\n- " },
