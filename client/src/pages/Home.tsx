@@ -22,6 +22,7 @@ export default function Home() {
   const [preview, setPreview] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiMode, setAiMode] = useState<"online" | "offline" | null>(null);
+  const [offlineReason, setOfflineReason] = useState<"network" | "timeout" | "invalid_response" | "service" | "unknown" | null>(null);
   const [hideCompleted, setHideCompleted] = useState(() => loadPreferences().hideCompleted);
   const [sortBy, setSortBy] = useState<"date" | "priority" | "category">(() => loadPreferences().sortBy);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -88,7 +89,9 @@ export default function Home() {
     onSuccess: (createdNote) => {
       setNoteContent("");
       setPreview(null);
-      setAiMode(createdNote?.analysisSource === "offline" ? "offline" : "online");
+      const usedOfflineFallback = createdNote?.analysisSource === "offline";
+      setAiMode(usedOfflineFallback ? "offline" : "online");
+      setOfflineReason(usedOfflineFallback ? createdNote?.analysisFallbackReason ?? "unknown" : null);
       refetch();
     },
   });
@@ -193,9 +196,10 @@ export default function Home() {
               <p className="text-gray-300 text-lg">Turn raw thoughts into organized action.</p>
               <span className="text-[10px] font-bold tracking-[0.25em] text-gray-500">AUTHOR / DR SOHIL MOMIN</span>
             </div>
-            <div aria-live="polite" className={`mt-5 inline-flex items-center gap-2 border px-3 py-2 text-[10px] font-bold tracking-[0.2em] ${aiMode === "offline" ? "border-amber-500 bg-amber-950/40 text-amber-300" : "border-green-600/70 bg-green-950/30 text-green-400"}`}>
+            <div aria-live="polite" className={`group relative mt-5 inline-flex items-center gap-2 border px-3 py-2 text-[10px] font-bold tracking-[0.2em] ${aiMode === "offline" ? "border-amber-500 bg-amber-950/40 text-amber-300" : "border-green-600/70 bg-green-950/30 text-green-400"}`}>
               <span className={`h-2 w-2 rounded-full ${aiMode === "offline" ? "bg-amber-400" : "bg-green-500"}`} aria-hidden="true" />
               {aiMode === "offline" ? "OFFLINE AI · LOCAL FALLBACK ACTIVE" : "AI ONLINE · HOSTED ANALYSIS READY"}
+              {aiMode === "offline" && <><button type="button" aria-label="Why offline AI is active" title="Shows why the local fallback was used" className="flex h-4 w-4 items-center justify-center rounded-full border border-amber-300 text-[9px] leading-none">?</button><span role="tooltip" className="pointer-events-none absolute left-0 top-full z-20 mt-2 w-72 border border-amber-500 bg-black p-3 text-left text-[10px] font-normal leading-5 tracking-normal text-amber-100 opacity-0 shadow-[4px_4px_0_rgba(245,158,11,0.4)] transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">{offlineReason === "network" ? "Network error: the hosted AI could not be reached." : offlineReason === "timeout" ? "Timeout: the hosted AI took too long to respond." : offlineReason === "invalid_response" ? "Invalid response: the hosted AI returned unreadable data." : offlineReason === "service" ? "Service unavailable: the hosted AI is temporarily unavailable." : "The hosted AI was unavailable, so local analysis was used."}</span></>}
             </div>
           </div>
         </div>

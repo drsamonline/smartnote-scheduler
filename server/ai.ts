@@ -2,12 +2,14 @@ import { invokeLLM } from "./_core/llm";
 
 export type NoteCategory = "Tasks" | "Deadlines" | "Schedule" | "Thoughts" | "Learning";
 export type NotePriority = "Low" | "Medium" | "High";
+export type FallbackReason = "network" | "timeout" | "invalid_response" | "service" | "unknown";
 
 export interface AIAnalysisResult {
   category: NoteCategory;
   priority: NotePriority;
   title: string;
   source: "online" | "offline";
+  fallbackReason?: FallbackReason;
   extractedDate?: Date;
   extractedTime?: string;
 }
@@ -51,6 +53,15 @@ export function analyzeNoteContentOffline(content: string): AIAnalysisResult {
     extractedDate: extracted.date,
     extractedTime: extracted.time,
   };
+}
+
+export function getFallbackReason(error: unknown): FallbackReason {
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  if (message.includes("timeout") || message.includes("timed out") || message.includes("etimedout") || message.includes("abort")) return "timeout";
+  if (message.includes("network") || message.includes("fetch") || message.includes("econn") || message.includes("enotfound") || message.includes("eai_again") || message.includes("socket")) return "network";
+  if (error instanceof SyntaxError || message.includes("json") || message.includes("parse") || message.includes("response")) return "invalid_response";
+  if (message.includes("429") || message.includes("502") || message.includes("503") || message.includes("service") || message.includes("unavailable")) return "service";
+  return "unknown";
 }
 
 /**
@@ -118,7 +129,7 @@ Return ONLY valid JSON with no markdown formatting:
   } catch (error) {
     console.error("[AI] Error analyzing note:", error);
     // Keep note creation useful when the hosted model is unavailable.
-    return analyzeNoteContentOffline(content);
+    return { ...analyzeNoteContentOffline(content), fallbackReason: getFallbackReason(error) };
   }
 }
 

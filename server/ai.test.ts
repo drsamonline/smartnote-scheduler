@@ -1,6 +1,6 @@
 import { beforeEach, describe, it, expect, vi } from "vitest";
 import { invokeLLM } from "./_core/llm";
-import { analyzeNoteContent, analyzeNoteContentOffline, extractDateTimeFromText, combineDateAndTime, getNextDayOfWeek } from "./ai";
+import { analyzeNoteContent, analyzeNoteContentOffline, extractDateTimeFromText, combineDateAndTime, getFallbackReason, getNextDayOfWeek } from "./ai";
 
 vi.mock("./_core/llm", () => ({ invokeLLM: vi.fn() }));
 
@@ -106,6 +106,12 @@ describe("AI Service - Category Detection", () => {
     expect(result.title).toBe("Study the new protocol tomorrow at 9am");
     expect(result.extractedDate).toBeDefined();
     expect(result.extractedTime).toBe("09:00");
+  });
+
+  it("reports a specific fallback reason for timeout and network failures", () => {
+    expect(getFallbackReason(new Error("request timed out"))).toBe("timeout");
+    expect(getFallbackReason(new Error("network connection failed"))).toBe("network");
+    expect(getFallbackReason(new SyntaxError("Unexpected token in JSON"))).toBe("invalid_response");
   });
 
   it("should identify task keywords", () => {
