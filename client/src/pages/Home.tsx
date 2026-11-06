@@ -21,6 +21,7 @@ export default function Home() {
   const [showStats, setShowStats] = useState(() => loadPreferences().showStats);
   const [preview, setPreview] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiMode, setAiMode] = useState<"online" | "offline" | null>(null);
   const [hideCompleted, setHideCompleted] = useState(() => loadPreferences().hideCompleted);
   const [sortBy, setSortBy] = useState<"date" | "priority" | "category">(() => loadPreferences().sortBy);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -84,9 +85,10 @@ export default function Home() {
 
   // Mutations
   const createNoteMutation = trpc.notes.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (createdNote) => {
       setNoteContent("");
       setPreview(null);
+      setAiMode(createdNote?.analysisSource === "offline" ? "offline" : "online");
       refetch();
     },
   });
@@ -190,6 +192,10 @@ export default function Home() {
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
               <p className="text-gray-300 text-lg">Turn raw thoughts into organized action.</p>
               <span className="text-[10px] font-bold tracking-[0.25em] text-gray-500">AUTHOR / DR SOHIL MOMIN</span>
+            </div>
+            <div aria-live="polite" className={`mt-5 inline-flex items-center gap-2 border px-3 py-2 text-[10px] font-bold tracking-[0.2em] ${aiMode === "offline" ? "border-amber-500 bg-amber-950/40 text-amber-300" : "border-green-600/70 bg-green-950/30 text-green-400"}`}>
+              <span className={`h-2 w-2 rounded-full ${aiMode === "offline" ? "bg-amber-400" : "bg-green-500"}`} aria-hidden="true" />
+              {aiMode === "offline" ? "OFFLINE AI · LOCAL FALLBACK ACTIVE" : "AI ONLINE · HOSTED ANALYSIS READY"}
             </div>
           </div>
         </div>

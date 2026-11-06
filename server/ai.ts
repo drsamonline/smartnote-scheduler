@@ -7,6 +7,7 @@ export interface AIAnalysisResult {
   category: NoteCategory;
   priority: NotePriority;
   title: string;
+  source: "online" | "offline";
   extractedDate?: Date;
   extractedTime?: string;
 }
@@ -46,6 +47,7 @@ export function analyzeNoteContentOffline(content: string): AIAnalysisResult {
     category: matchedCategory,
     priority,
     title: createLocalTitle(content),
+    source: "offline",
     extractedDate: extracted.date,
     extractedTime: extracted.time,
   };
@@ -109,6 +111,7 @@ Return ONLY valid JSON with no markdown formatting:
       category: parsed.category || "Thoughts",
       priority: parsed.priority || "Medium",
       title: parsed.title || "Untitled Note",
+      source: "online",
       extractedDate: parsed.extractedDate ? new Date(parsed.extractedDate) : undefined,
       extractedTime: parsed.extractedTime || undefined,
     };

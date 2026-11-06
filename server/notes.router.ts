@@ -73,7 +73,7 @@ export const notesRouter = router({
           }
         }
 
-        return createdNote;
+        return createdNote ? { ...createdNote, analysisSource: analysis.source } : createdNote;
       } catch (error) {
         console.error("[Notes] Error creating note:", error);
         throw error;
