@@ -66,6 +66,13 @@ export function getFallbackReason(error: unknown): FallbackReason {
   return "unknown";
 }
 
+export function resolveAnalysisSelection(analysis: AIAnalysisResult, overrides: { category?: NoteCategory; priority?: NotePriority }) {
+  return {
+    category: overrides.category ?? analysis.category,
+    priority: overrides.priority ?? analysis.priority,
+  };
+}
+
 /**
  * Analyze note content and extract category, priority, title, and date/time information
  */

@@ -1,6 +1,6 @@
 import { beforeEach, describe, it, expect, vi } from "vitest";
 import { invokeLLM } from "./_core/llm";
-import { analyzeNoteContent, analyzeNoteContentOffline, extractDateTimeFromText, combineDateAndTime, getFallbackReason, getNextDayOfWeek } from "./ai";
+import { analyzeNoteContent, analyzeNoteContentOffline, extractDateTimeFromText, combineDateAndTime, getFallbackReason, getNextDayOfWeek, resolveAnalysisSelection } from "./ai";
 
 vi.mock("./_core/llm", () => ({ invokeLLM: vi.fn() }));
 
@@ -121,6 +121,11 @@ describe("AI Service - Category Detection", () => {
     expect(result.category).toBe("Tasks");
     expect(result.extractedTime).toBe("18:00");
     expect(invokeLLM).not.toHaveBeenCalled();
+  });
+
+  it("honors category and priority selections made during review", () => {
+    const analysis = analyzeNoteContentOffline("Read the research notes tomorrow");
+    expect(resolveAnalysisSelection(analysis, { category: "Tasks", priority: "High" })).toEqual({ category: "Tasks", priority: "High" });
   });
 
   it("should identify task keywords", () => {

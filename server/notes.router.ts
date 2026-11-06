@@ -13,7 +13,7 @@ import {
   getRemindersForNote,
   deleteRemindersForNote,
 } from "./db";
-import { analyzeNoteContent, combineDateAndTime } from "./ai";
+import { analyzeNoteContent, combineDateAndTime, resolveAnalysisSelection } from "./ai";
 import { notifyOwner } from "./_core/notification";
 
 export const notesRouter = router({
@@ -21,11 +21,12 @@ export const notesRouter = router({
    * Create a new note with AI analysis
    */
   create: protectedProcedure
-    .input(z.object({ content: z.string().min(1), forceOffline: z.boolean().optional() }))
+    .input(z.object({ content: z.string().min(1), forceOffline: z.boolean().optional(), category: z.enum(["Tasks", "Deadlines", "Schedule", "Thoughts", "Learning"]).optional(), priority: z.enum(["Low", "Medium", "High"]).optional() }))
     .mutation(async ({ input, ctx }) => {
       try {
         // Analyze content with AI
         const analysis = await analyzeNoteContent(input.content, { forceOffline: input.forceOffline });
+        const { category, priority } = resolveAnalysisSelection(analysis, input);
 
         // Determine the appropriate date field based on category
         let dueDate: Date | undefined;
@@ -33,9 +34,9 @@ export const notesRouter = router({
 
         if (analysis.extractedDate) {
           const fullDateTime = combineDateAndTime(analysis.extractedDate, analysis.extractedTime);
-          if (analysis.category === "Deadlines") {
+          if (category === "Deadlines") {
             dueDate = fullDateTime;
-          } else if (analysis.category === "Schedule") {
+          } else if (category === "Schedule") {
             scheduledDate = fullDateTime;
           }
         }
@@ -45,8 +46,8 @@ export const notesRouter = router({
           userId: ctx.user.id,
           title: analysis.title,
           content: input.content,
-          category: analysis.category,
-          priority: analysis.priority,
+          category,
+          priority,
           dueDate,
           scheduledDate,
           isCompleted: 0,

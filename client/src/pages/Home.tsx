@@ -139,7 +139,7 @@ export default function Home() {
     if (!noteContent.trim()) return;
     setIsSubmitting(true);
     try {
-      await createNoteMutation.mutateAsync({ content: noteContent, forceOffline: manualOfflineAI });
+      await createNoteMutation.mutateAsync({ content: noteContent, forceOffline: manualOfflineAI, category: preview?.category, priority: preview?.priority });
     } finally {
       setIsSubmitting(false);
     }
@@ -256,7 +256,7 @@ export default function Home() {
               className="focus-brutal bg-gray-950 border-2 border-white text-white placeholder-gray-500 p-4 font-mono min-h-32 transition-colors focus:border-red-600"
               rows={4}
             />
-            <NotePreview isAnalyzing={isAnalyzing} preview={preview} />
+            <NotePreview isAnalyzing={isAnalyzing} preview={preview} onCategoryChange={(category) => setPreview((current: any) => current ? { ...current, category } : current)} onPriorityChange={(priority) => setPreview((current: any) => current ? { ...current, priority } : current)} />
             <div className="flex gap-4">
               <Button
                 onClick={handleCreateNote}

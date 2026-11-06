@@ -2,6 +2,8 @@ import { Loader2 } from "lucide-react";
 
 interface NotePreviewProps {
   isAnalyzing: boolean;
+  onCategoryChange?: (category: string) => void;
+  onPriorityChange?: (priority: string) => void;
   preview?: {
     category: string;
     priority: string;
@@ -12,21 +14,7 @@ interface NotePreviewProps {
   };
 }
 
-const categoryColors: Record<string, string> = {
-  Tasks: "bg-blue-600",
-  Deadlines: "bg-red-600",
-  Schedule: "bg-green-600",
-  Thoughts: "bg-purple-600",
-  Learning: "bg-yellow-600",
-};
-
-const priorityColors: Record<string, string> = {
-  High: "bg-red-600",
-  Medium: "bg-gray-700",
-  Low: "bg-gray-500",
-};
-
-export function NotePreview({ isAnalyzing, preview }: NotePreviewProps) {
+export function NotePreview({ isAnalyzing, preview, onCategoryChange, onPriorityChange }: NotePreviewProps) {
   if (!isAnalyzing && !preview) return null;
 
   return (
@@ -45,20 +33,9 @@ export function NotePreview({ isAnalyzing, preview }: NotePreviewProps) {
             <p className="text-white font-bold">{preview.title}</p>
           </div>
           
-          <div className="flex gap-2 flex-wrap">
-            <div>
-              <p className="text-xs font-bold text-gray-400 mb-1">CATEGORY</p>
-              <span className={`${categoryColors[preview.category as keyof typeof categoryColors]} text-white px-3 py-1 text-xs font-bold inline-block`}>
-                {preview.category}
-              </span>
-            </div>
-            
-            <div>
-              <p className="text-xs font-bold text-gray-400 mb-1">PRIORITY</p>
-              <span className={`${priorityColors[preview.priority as keyof typeof priorityColors]} text-white px-3 py-1 text-xs font-bold inline-block`}>
-                {preview.priority}
-              </span>
-            </div>
+          <div className="flex gap-3 flex-wrap">
+            <label className="block"><span className="text-xs font-bold text-gray-400 mb-1 block">CATEGORY · EDIT BEFORE SAVE</span><select value={preview.category} onChange={(event) => onCategoryChange?.(event.target.value)} className="bg-gray-950 border border-white/60 px-3 py-1 text-xs font-bold text-white">{["Tasks", "Deadlines", "Schedule", "Thoughts", "Learning"].map((category) => <option key={category}>{category}</option>)}</select></label>
+            <label className="block"><span className="text-xs font-bold text-gray-400 mb-1 block">PRIORITY · EDIT BEFORE SAVE</span><select value={preview.priority} onChange={(event) => onPriorityChange?.(event.target.value)} className="bg-gray-950 border border-white/60 px-3 py-1 text-xs font-bold text-white">{["Low", "Medium", "High"].map((priority) => <option key={priority}>{priority}</option>)}</select></label>
           </div>
 
           {preview.matchedKeywords && preview.matchedKeywords.length > 0 && (
