@@ -9,6 +9,7 @@ export interface AIAnalysisResult {
   priority: NotePriority;
   title: string;
   source: "online" | "offline";
+  mode: "online" | "manual" | "fallback";
   fallbackReason?: FallbackReason;
   extractedDate?: Date;
   extractedTime?: string;
@@ -50,6 +51,7 @@ export function analyzeNoteContentOffline(content: string): AIAnalysisResult {
     priority,
     title: createLocalTitle(content),
     source: "offline",
+    mode: "fallback",
     extractedDate: extracted.date,
     extractedTime: extracted.time,
   };
@@ -67,7 +69,11 @@ export function getFallbackReason(error: unknown): FallbackReason {
 /**
  * Analyze note content and extract category, priority, title, and date/time information
  */
-export async function analyzeNoteContent(content: string): Promise<AIAnalysisResult> {
+export async function analyzeNoteContent(content: string, options?: { forceOffline?: boolean }): Promise<AIAnalysisResult> {
+  if (options?.forceOffline) {
+    return { ...analyzeNoteContentOffline(content), mode: "manual" };
+  }
+
   const systemPrompt = `You are an AI assistant that analyzes user notes and extracts structured information.
 
 Your task is to:
@@ -123,13 +129,14 @@ Return ONLY valid JSON with no markdown formatting:
       priority: parsed.priority || "Medium",
       title: parsed.title || "Untitled Note",
       source: "online",
+      mode: "online",
       extractedDate: parsed.extractedDate ? new Date(parsed.extractedDate) : undefined,
       extractedTime: parsed.extractedTime || undefined,
     };
   } catch (error) {
     console.error("[AI] Error analyzing note:", error);
     // Keep note creation useful when the hosted model is unavailable.
-    return { ...analyzeNoteContentOffline(content), fallbackReason: getFallbackReason(error) };
+    return { ...analyzeNoteContentOffline(content), mode: "fallback", fallbackReason: getFallbackReason(error) };
   }
 }
 

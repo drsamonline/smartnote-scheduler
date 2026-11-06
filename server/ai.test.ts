@@ -114,6 +114,15 @@ describe("AI Service - Category Detection", () => {
     expect(getFallbackReason(new SyntaxError("Unexpected token in JSON"))).toBe("invalid_response");
   });
 
+  it("uses local analysis immediately when manual offline mode is requested", async () => {
+    const result = await analyzeNoteContent("Buy groceries tomorrow at 6pm", { forceOffline: true });
+    expect(result.mode).toBe("manual");
+    expect(result.source).toBe("offline");
+    expect(result.category).toBe("Tasks");
+    expect(result.extractedTime).toBe("18:00");
+    expect(invokeLLM).not.toHaveBeenCalled();
+  });
+
   it("should identify task keywords", () => {
     const taskKeywords = ["todo", "task", "action item", "do", "complete", "finish"];
     taskKeywords.forEach((keyword) => {

@@ -21,11 +21,11 @@ export const notesRouter = router({
    * Create a new note with AI analysis
    */
   create: protectedProcedure
-    .input(z.object({ content: z.string().min(1) }))
+    .input(z.object({ content: z.string().min(1), forceOffline: z.boolean().optional() }))
     .mutation(async ({ input, ctx }) => {
       try {
         // Analyze content with AI
-        const analysis = await analyzeNoteContent(input.content);
+        const analysis = await analyzeNoteContent(input.content, { forceOffline: input.forceOffline });
 
         // Determine the appropriate date field based on category
         let dueDate: Date | undefined;
@@ -73,7 +73,7 @@ export const notesRouter = router({
           }
         }
 
-        return createdNote ? { ...createdNote, analysisSource: analysis.source, analysisFallbackReason: analysis.fallbackReason } : createdNote;
+        return createdNote ? { ...createdNote, analysisSource: analysis.source, analysisMode: analysis.mode, analysisFallbackReason: analysis.fallbackReason } : createdNote;
       } catch (error) {
         console.error("[Notes] Error creating note:", error);
         throw error;

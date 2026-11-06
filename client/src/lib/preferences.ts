@@ -6,6 +6,7 @@ export type AppPreferences = {
   hideCompleted: boolean;
   sortBy: SortPreference;
   theme: ThemePreference;
+  manualOfflineAI: boolean;
 };
 
 export const DEFAULT_PREFERENCES: AppPreferences = {
@@ -13,6 +14,7 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   hideCompleted: false,
   sortBy: "date",
   theme: "dark",
+  manualOfflineAI: false,
 };
 
 const STORAGE_KEY = "smartnote.preferences";
