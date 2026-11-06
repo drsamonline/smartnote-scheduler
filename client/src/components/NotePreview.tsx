@@ -52,6 +52,21 @@ export function NotePreview({ isAnalyzing, preview, onCategoryChange, onPriority
             </div>
           )}
           {preview.extractedTime && <p className="text-white font-bold text-sm">TIME: {preview.extractedTime}</p>}
+
+          {(preview.category === "Deadlines" || preview.category === "Schedule") && (
+            <div className={`border-2 p-3 ${preview.extractedDate || preview.extractedTime ? "border-green-500 bg-green-950/30" : "border-amber-500 bg-amber-950/30"}`}>
+              <p className="text-xs font-bold tracking-widest text-gray-300 mb-2">REMINDER PREVIEW</p>
+              {preview.extractedDate || preview.extractedTime ? (
+                <>
+                  <p className="text-lg font-bold text-white">{preview.category === "Deadlines" ? "DEADLINE" : "SCHEDULED EVENT"}</p>
+                  <p className="text-sm font-bold text-green-300">{preview.extractedDate || "DATE NOT DETECTED"}{preview.extractedTime ? ` · ${preview.extractedTime}` : " · TIME NOT DETECTED"}</p>
+                  <p className="mt-2 text-[10px] font-bold tracking-widest text-green-400">NOTIFICATION: 1 HOUR BEFORE</p>
+                </>
+              ) : (
+                <p className="text-sm font-bold text-amber-200">NO DATE OR TIME DETECTED — add a date or time to create a reminder.</p>
+              )}
+            </div>
+          )}
         </div>
       ) : null}
     </div>

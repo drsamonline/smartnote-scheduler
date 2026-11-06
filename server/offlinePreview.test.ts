@@ -17,4 +17,11 @@ describe("offline note review preview", () => {
     expect(preview.priority).toBe("Medium");
     expect(preview.matchedKeywords).toContain("thought");
   });
+
+  it("extracts schedule reminder details for the review panel", () => {
+    const preview = analyzeOfflinePreview("Team meeting Friday at 10am");
+    expect(preview.category).toBe("Schedule");
+    expect(preview.extractedDate).toBeDefined();
+    expect(preview.extractedTime).toBe("10:00");
+  });
 });
