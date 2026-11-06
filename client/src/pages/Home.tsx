@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { loadCustomTemplates, noteTemplates } from "@/data/noteTemplates";
 import { loadPreferences } from "@/lib/preferences";
+import { analyzeOfflinePreview } from "@/lib/offlinePreview";
 
 export default function Home() {
   const { user } = useAuth();
@@ -124,24 +125,10 @@ export default function Home() {
   const handleContentChange = (value: string) => {
     setNoteContent(value);
     
-    // Show preview after 500ms of typing
+    // Show a transparent local review before saving.
     if (value.trim().length > 10) {
-      setIsAnalyzing(true);
-      setTimeout(() => {
-        // Mock preview - in real app this would call the AI
-        const mockCategories = ["Tasks", "Deadlines", "Schedule", "Thoughts", "Learning"];
-        const mockPriorities = ["Low", "Medium", "High"];
-        const randomCategory = mockCategories[Math.floor(Math.random() * mockCategories.length)];
-        const randomPriority = mockPriorities[Math.floor(Math.random() * mockPriorities.length)];
-        
-        setPreview({
-          category: randomCategory,
-          priority: randomPriority,
-          title: value.substring(0, 50) || "Untitled",
-          extractedDate: value.includes("tomorrow") ? "Tomorrow" : undefined,
-        });
-        setIsAnalyzing(false);
-      }, 800);
+      setIsAnalyzing(false);
+      setPreview(analyzeOfflinePreview(value));
     } else {
       setPreview(null);
       setIsAnalyzing(false);

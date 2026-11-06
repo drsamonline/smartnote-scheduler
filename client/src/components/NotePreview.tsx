@@ -6,7 +6,9 @@ interface NotePreviewProps {
     category: string;
     priority: string;
     title: string;
+    matchedKeywords?: string[];
     extractedDate?: string;
+    extractedTime?: string;
   };
 }
 
@@ -29,7 +31,7 @@ export function NotePreview({ isAnalyzing, preview }: NotePreviewProps) {
 
   return (
     <div className="border-2 border-red-600 p-4 bg-gray-900 mt-4">
-      <p className="text-xs font-bold tracking-widest text-red-600 mb-3">AI PREVIEW</p>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3"><p className="text-xs font-bold tracking-widest text-red-600">LOCAL REVIEW BEFORE SAVE</p><span className="text-[10px] font-bold tracking-widest text-gray-500">KEYWORD ENGINE</span></div>
       
       {isAnalyzing ? (
         <div className="flex items-center gap-2 text-gray-400">
@@ -59,12 +61,20 @@ export function NotePreview({ isAnalyzing, preview }: NotePreviewProps) {
             </div>
           </div>
 
+          {preview.matchedKeywords && preview.matchedKeywords.length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-gray-400 mb-1">DETECTED KEYWORDS</p>
+              <div className="flex flex-wrap gap-2">{preview.matchedKeywords.map((keyword) => <span key={keyword} className="border border-amber-500/70 bg-amber-950/30 px-2 py-1 text-[10px] font-bold tracking-wide text-amber-200">{keyword}</span>)}</div>
+            </div>
+          )}
+
           {preview.extractedDate && (
             <div>
               <p className="text-xs font-bold text-gray-400 mb-1">DETECTED DATE</p>
               <p className="text-white font-bold text-sm">{preview.extractedDate}</p>
             </div>
           )}
+          {preview.extractedTime && <p className="text-white font-bold text-sm">TIME: {preview.extractedTime}</p>}
         </div>
       ) : null}
     </div>
