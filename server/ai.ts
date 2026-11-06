@@ -11,6 +11,46 @@ export interface AIAnalysisResult {
   extractedTime?: string;
 }
 
+const categoryKeywords: Array<{ category: NoteCategory; keywords: string[] }> = [
+  { category: "Deadlines", keywords: ["deadline", "due", "submit", "submission", "deliver", "by ", "before ", "expires"] },
+  { category: "Schedule", keywords: ["meeting", "appointment", "calendar", "event", "schedule", "conference", "call with", "see you"] },
+  { category: "Learning", keywords: ["learn", "study", "understand", "research", "read", "course", "lesson", "practice", "knowledge"] },
+  { category: "Tasks", keywords: ["todo", "to-do", "task", "action item", "remember to", "need to", "must ", "finish", "complete", "buy "] },
+  { category: "Thoughts", keywords: ["idea", "think", "thought", "consider", "reflect", "journal", "note"] },
+];
+
+const highPriorityKeywords = ["urgent", "asap", "critical", "important", "immediately", "emergency", "overdue"];
+const lowPriorityKeywords = ["someday", "maybe", "optional", "nice-to-have", "whenever", "if possible"];
+
+function includesKeyword(text: string, keyword: string) {
+  return keyword.includes(" ") || keyword.includes("-") ? text.includes(keyword) : new RegExp(`\\b${keyword}\\b`, "i").test(text);
+}
+
+function createLocalTitle(content: string) {
+  const title = content.replace(/\s+/g, " ").trim().split(/[.!?\n]/)[0] || "Untitled Note";
+  return title.length > 50 ? `${title.substring(0, 47).trimEnd()}...` : title;
+}
+
+/** Analyze a note without network access using keyword rules and the deterministic date parser. */
+export function analyzeNoteContentOffline(content: string): AIAnalysisResult {
+  const normalized = content.toLowerCase();
+  const matchedCategory = categoryKeywords.find(({ keywords }) => keywords.some((keyword) => includesKeyword(normalized, keyword)))?.category ?? "Thoughts";
+  const priority: NotePriority = highPriorityKeywords.some((keyword) => includesKeyword(normalized, keyword))
+    ? "High"
+    : lowPriorityKeywords.some((keyword) => includesKeyword(normalized, keyword))
+      ? "Low"
+      : "Medium";
+  const extracted = extractDateTimeFromText(content);
+
+  return {
+    category: matchedCategory,
+    priority,
+    title: createLocalTitle(content),
+    extractedDate: extracted.date,
+    extractedTime: extracted.time,
+  };
+}
+
 /**
  * Analyze note content and extract category, priority, title, and date/time information
  */
@@ -74,12 +114,8 @@ Return ONLY valid JSON with no markdown formatting:
     };
   } catch (error) {
     console.error("[AI] Error analyzing note:", error);
-    // Return safe defaults if analysis fails
-    return {
-      category: "Thoughts",
-      priority: "Medium",
-      title: content.substring(0, 50) || "Untitled Note",
-    };
+    // Keep note creation useful when the hosted model is unavailable.
+    return analyzeNoteContentOffline(content);
   }
 }
 

@@ -1,5 +1,12 @@
-import { describe, it, expect } from "vitest";
-import { extractDateTimeFromText, combineDateAndTime, getNextDayOfWeek } from "./ai";
+import { beforeEach, describe, it, expect, vi } from "vitest";
+import { invokeLLM } from "./_core/llm";
+import { analyzeNoteContent, analyzeNoteContentOffline, extractDateTimeFromText, combineDateAndTime, getNextDayOfWeek } from "./ai";
+
+vi.mock("./_core/llm", () => ({ invokeLLM: vi.fn() }));
+
+beforeEach(() => {
+  vi.mocked(invokeLLM).mockReset();
+});
 
 describe("AI Service - Date/Time Extraction", () => {
   describe("extractDateTimeFromText", () => {
@@ -84,6 +91,23 @@ describe("AI Service - Date/Time Extraction", () => {
 });
 
 describe("AI Service - Category Detection", () => {
+  it("classifies notes locally using keywords and extracts deterministic dates", () => {
+    const result = analyzeNoteContentOffline("Submit the urgent report tomorrow at 5pm");
+    expect(result.category).toBe("Deadlines");
+    expect(result.priority).toBe("High");
+    expect(result.extractedDate).toBeDefined();
+    expect(result.extractedTime).toBe("17:00");
+  });
+
+  it("falls back to local analysis when the hosted AI is unavailable", async () => {
+    vi.mocked(invokeLLM).mockRejectedValueOnce(new Error("network unavailable"));
+    const result = await analyzeNoteContent("Study the new protocol tomorrow at 9am");
+    expect(result.category).toBe("Learning");
+    expect(result.title).toBe("Study the new protocol tomorrow at 9am");
+    expect(result.extractedDate).toBeDefined();
+    expect(result.extractedTime).toBe("09:00");
+  });
+
   it("should identify task keywords", () => {
     const taskKeywords = ["todo", "task", "action item", "do", "complete", "finish"];
     taskKeywords.forEach((keyword) => {
