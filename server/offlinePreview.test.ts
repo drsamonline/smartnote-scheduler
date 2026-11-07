@@ -9,6 +9,8 @@ describe("offline note review preview", () => {
     expect(preview.matchedKeywords).toEqual(expect.arrayContaining(["submit", "urgent"]));
     expect(preview.extractedTime).toBe("17:00");
     expect(preview.extractedDate).toBeDefined();
+    expect(preview.reminderDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(preview.reminderTime).toBe("17:00");
   });
 
   it("defaults unclassified text to Thoughts without hiding the review", () => {

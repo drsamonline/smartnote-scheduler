@@ -21,7 +21,7 @@ export const notesRouter = router({
    * Create a new note with AI analysis
    */
   create: protectedProcedure
-    .input(z.object({ content: z.string().min(1), forceOffline: z.boolean().optional(), category: z.enum(["Tasks", "Deadlines", "Schedule", "Thoughts", "Learning"]).optional(), priority: z.enum(["Low", "Medium", "High"]).optional() }))
+    .input(z.object({ content: z.string().min(1), forceOffline: z.boolean().optional(), category: z.enum(["Tasks", "Deadlines", "Schedule", "Thoughts", "Learning"]).optional(), priority: z.enum(["Low", "Medium", "High"]).optional(), reminderDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), reminderTime: z.string().regex(/^\d{2}:\d{2}$/).optional() }))
     .mutation(async ({ input, ctx }) => {
       try {
         // Analyze content with AI
@@ -32,8 +32,10 @@ export const notesRouter = router({
         let dueDate: Date | undefined;
         let scheduledDate: Date | undefined;
 
-        if (analysis.extractedDate) {
-          const fullDateTime = combineDateAndTime(analysis.extractedDate, analysis.extractedTime);
+        const reminderDate = input.reminderDate ? new Date(`${input.reminderDate}T00:00:00`) : analysis.extractedDate;
+        const reminderTime = input.reminderTime ?? analysis.extractedTime;
+        if (reminderDate && !Number.isNaN(reminderDate.getTime())) {
+          const fullDateTime = combineDateAndTime(reminderDate, reminderTime);
           if (category === "Deadlines") {
             dueDate = fullDateTime;
           } else if (category === "Schedule") {

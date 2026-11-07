@@ -4,6 +4,8 @@ interface NotePreviewProps {
   isAnalyzing: boolean;
   onCategoryChange?: (category: string) => void;
   onPriorityChange?: (priority: string) => void;
+  onReminderDateChange?: (date: string) => void;
+  onReminderTimeChange?: (time: string) => void;
   preview?: {
     category: string;
     priority: string;
@@ -11,10 +13,12 @@ interface NotePreviewProps {
     matchedKeywords?: string[];
     extractedDate?: string;
     extractedTime?: string;
+    reminderDate?: string;
+    reminderTime?: string;
   };
 }
 
-export function NotePreview({ isAnalyzing, preview, onCategoryChange, onPriorityChange }: NotePreviewProps) {
+export function NotePreview({ isAnalyzing, preview, onCategoryChange, onPriorityChange, onReminderDateChange, onReminderTimeChange }: NotePreviewProps) {
   if (!isAnalyzing && !preview) return null;
 
   return (
@@ -56,14 +60,17 @@ export function NotePreview({ isAnalyzing, preview, onCategoryChange, onPriority
           {(preview.category === "Deadlines" || preview.category === "Schedule") && (
             <div className={`border-2 p-3 ${preview.extractedDate || preview.extractedTime ? "border-green-500 bg-green-950/30" : "border-amber-500 bg-amber-950/30"}`}>
               <p className="text-xs font-bold tracking-widest text-gray-300 mb-2">REMINDER PREVIEW</p>
-              {preview.extractedDate || preview.extractedTime ? (
+              {preview.reminderDate && preview.reminderTime ? (
                 <>
                   <p className="text-lg font-bold text-white">{preview.category === "Deadlines" ? "DEADLINE" : "SCHEDULED EVENT"}</p>
-                  <p className="text-sm font-bold text-green-300">{preview.extractedDate || "DATE NOT DETECTED"}{preview.extractedTime ? ` · ${preview.extractedTime}` : " · TIME NOT DETECTED"}</p>
+                  <div className="flex flex-wrap gap-3 mt-2">
+                    <label className="block"><span className="text-[10px] font-bold tracking-widest text-gray-400 block mb-1">DATE · EDIT</span><input type="date" value={preview.reminderDate || ""} onChange={(event) => onReminderDateChange?.(event.target.value)} className="bg-gray-950 border border-green-500 px-2 py-1 text-sm font-bold text-white" /></label>
+                    <label className="block"><span className="text-[10px] font-bold tracking-widest text-gray-400 block mb-1">TIME · EDIT</span><input type="time" value={preview.reminderTime || ""} onChange={(event) => onReminderTimeChange?.(event.target.value)} className="bg-gray-950 border border-green-500 px-2 py-1 text-sm font-bold text-white" /></label>
+                  </div>
                   <p className="mt-2 text-[10px] font-bold tracking-widest text-green-400">NOTIFICATION: 1 HOUR BEFORE</p>
                 </>
               ) : (
-                <p className="text-sm font-bold text-amber-200">NO DATE OR TIME DETECTED — add a date or time to create a reminder.</p>
+                <><p className="text-sm font-bold text-amber-200">DATE AND TIME REQUIRED — enter both values below to create a reminder.</p><div className="flex flex-wrap gap-3 mt-3"><label className="block"><span className="text-[10px] font-bold tracking-widest text-gray-400 block mb-1">DATE · EDIT</span><input type="date" value={preview.reminderDate || ""} onChange={(event) => onReminderDateChange?.(event.target.value)} className="bg-gray-950 border border-amber-500 px-2 py-1 text-sm font-bold text-white" /></label><label className="block"><span className="text-[10px] font-bold tracking-widest text-gray-400 block mb-1">TIME · EDIT</span><input type="time" value={preview.reminderTime || ""} onChange={(event) => onReminderTimeChange?.(event.target.value)} className="bg-gray-950 border border-amber-500 px-2 py-1 text-sm font-bold text-white" /></label></div></>
               )}
             </div>
           )}

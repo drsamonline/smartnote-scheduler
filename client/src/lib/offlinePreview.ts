@@ -50,7 +50,8 @@ function detectDateTime(text: string) {
     time = `${String(adjusted).padStart(2, "0")}:00`;
   }
 
-  return { date, time };
+  const reminderDate = date ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}` : undefined;
+  return { date, time, reminderDate };
 }
 
 export function analyzeOfflinePreview(content: string) {
@@ -76,5 +77,7 @@ export function analyzeOfflinePreview(content: string) {
     matchedKeywords: Array.from(new Set(matchedKeywords)),
     extractedDate: dateTime.date ? (dateTime.date.toDateString() === new Date().toDateString() ? "Today" : dateTime.date.toLocaleDateString()) : undefined,
     extractedTime: dateTime.time,
+    reminderDate: dateTime.reminderDate,
+    reminderTime: dateTime.time,
   };
 }
