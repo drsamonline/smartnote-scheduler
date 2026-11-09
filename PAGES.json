@@ -1,0 +1,10 @@
+{
+  "_note": "Pages are declared here so a sweep cannot guess. docs/index.html is the project page and the site root. client/index.html is the Vite dev entry and is NOT published.",
+  "manual": true,
+  "landing": "docs/index.html",
+  "app": null,
+  "entry": "https://drsamonline.github.io/smartnote-scheduler/",
+  "deleted": [],
+  "landing_note": "One page, hand-written, no external requests. The app itself cannot be a static page - it needs a Node server and a MySQL database - so the page describes it and the app runs locally.",
+  "updated": "2026-11-09"
+}
