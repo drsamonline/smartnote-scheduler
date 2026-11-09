@@ -1,169 +1,174 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SmartNote Scheduler — notes that schedule themselves</title>
-<meta name="description" content="An AI note app: write in plain English and the note is classified, prioritised, dated and reminded. React + tRPC + Drizzle on MySQL. In development — no hosted instance; run it locally.">
+<meta name="description" content="Write a note in plain English; it is classified, prioritised, dated and reminded. React + tRPC + Drizzle on MySQL. In development — no hosted instance; run it locally.">
 <meta name="author" content="Dr Sohil Momin">
-<meta name="theme-color" content="#0b0d12">
+<meta name="theme-color" content="#000000">
 <link rel="canonical" href="https://drsamonline.github.io/smartnote-scheduler/">
 <meta property="og:title" content="SmartNote Scheduler — notes that schedule themselves">
-<meta property="og:description" content="Write a note in plain English. It is classified, prioritised, dated and reminded. In development; run it locally.">
+<meta property="og:description" content="Write a note in plain English. It is classified, prioritised, dated and reminded.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://drsamonline.github.io/smartnote-scheduler/">
+<meta property="og:image" content="https://drsamonline.github.io/smartnote-scheduler/assets/dashboard.png">
 <style>
+/* The app's own design language, taken from client/src/index.css and the
+   components: pure black, white 2px rules, red-600, ZERO radius, condensed
+   uppercase labels. Nothing here is rounded and nothing is soft. */
 :root{
-  --bg:#0b0d12; --panel:#12161f; --panel2:#161b26; --line:#232a38;
-  --ink:#eef1f6; --dim:#93a0b4; --acc:#a78bfa; --acc2:#22d3ee;
-  --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --r:14px;
+  --bg:#000; --ink:#fff;
+  --red:#dc2626; --red-d:#b91c1c;
+  --blue:#2563eb; --green:#16a34a; --purple:#9333ea; --yellow:#ca8a04;
+  --g900:#111827; --g700:#374151; --g500:#6b7280; --g400:#9ca3af; --g300:#d1d5db;
+  --rule:2px solid #fff;
   color-scheme: dark;
 }
-*{box-sizing:border-box}
-html,body{margin:0}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
 body{
-  background:radial-gradient(1100px 520px at 12% -10%, #1a1430 0%, transparent 60%),
-             radial-gradient(900px 480px at 100% 0%, #07222b 0%, transparent 55%), var(--bg);
-  color:var(--ink);
-  font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg); color:var(--ink);
+  font-family:"Arial Narrow","Helvetica Neue Condensed","Roboto Condensed",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-stretch:condensed; font-size:17px; line-height:1.55; letter-spacing:.01em;
   -webkit-font-smoothing:antialiased;
 }
-a{color:var(--acc);text-decoration:none;border-bottom:1px solid #3b2f63}
-a:hover{border-bottom-color:var(--acc)}
-.wrap{max-width:1040px;margin:0 auto;padding:0 22px}
-header.hero{padding:76px 0 44px}
-.eyebrow{display:inline-flex;gap:10px;align-items:center;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:6px 14px;background:#0e1219}
-.eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--warn);box-shadow:0 0 12px var(--warn)}
-h1{font-size:clamp(2.1rem,5.6vw,3.5rem);line-height:1.06;letter-spacing:-.03em;margin:22px 0 14px;font-weight:800}
-h1 .g{background:linear-gradient(92deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.lede{font-size:clamp(1.02rem,2.2vw,1.2rem);color:#c9d3e2;max-width:62ch;margin:0 0 26px}
-.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
-.btn{display:inline-block;padding:11px 20px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-weight:600;font-size:15px}
-.btn.primary{background:linear-gradient(92deg,#7c3aed,#0891b2);border-color:transparent}
-.btn:hover{transform:translateY(-1px)}
-.note{font-size:14px;color:var(--dim);margin-top:16px}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 0}
-.chip{font-size:12.5px;color:#c7d2e4;background:#0f141c;border:1px solid var(--line);border-radius:999px;padding:5px 11px}
-section{padding:44px 0;border-top:1px solid #171d28}
-h2{font-size:clamp(1.35rem,3vw,1.85rem);letter-spacing:-.02em;margin:0 0 8px}
-.sub{color:var(--dim);margin:0 0 26px;max-width:66ch}
-.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(238px,1fr))}
-.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:var(--r);padding:18px}
-.card h3{margin:0 0 6px;font-size:15.5px}
-.card p{margin:0;color:var(--dim);font-size:14.5px}
-.steps{counter-reset:s;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
-.step{position:relative;padding-left:52px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px 18px 18px 54px}
-.step::before{counter-increment:s;content:counter(s);position:absolute;left:16px;top:16px;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:13px;font-weight:700;color:#0b0d12;background:linear-gradient(92deg,var(--acc),var(--acc2))}
-.step b{display:block;margin-bottom:4px;font-size:15px}
-.step span{color:var(--dim);font-size:14.5px}
-/* an honest mock of the real UI: drawn, not a screenshot */
-.mock{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-.mock .bar{display:flex;gap:7px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);background:#0e1219;font-size:12.5px;color:var(--dim)}
-.mock .bar i{width:9px;height:9px;border-radius:50%;background:#2b3242;display:inline-block}
-.mock .body{padding:16px}
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-.tab{font-size:12.5px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
-.tab.on{color:#0b0d12;background:var(--acc);border-color:transparent;font-weight:700}
-.item{display:flex;gap:12px;align-items:flex-start;padding:11px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:9px;background:#101520}
-.item.over{border-color:#5a2a2a;background:#171017}
-.item .t{font-size:14.5px;font-weight:600}
-.item .m{font-size:12.5px;color:var(--dim);margin-top:3px}
-.pill{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:auto;white-space:nowrap}
-.p-hi{background:#3a1620;color:#fca5a5}
-.p-md{background:#3a2e12;color:#fcd34d}
-.p-lo{background:#123027;color:#6ee7b7}
-pre{background:#0d1219;border:1px solid var(--line);border-radius:12px;padding:16px;overflow:auto;font-size:13.5px;line-height:1.55}
-code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-pre code{color:#cbd5e1}
-.status{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:8px}
-.st{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
-.st b{display:block;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
-.st span{font-size:15px}
-.dotok{color:var(--ok)} .dotwarn{color:var(--warn)}
-details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:10px}
-summary{cursor:pointer;font-weight:600;font-size:15px}
-details p{color:var(--dim);margin:10px 0 0}
-footer{border-top:1px solid #171d28;padding:34px 0 60px;color:var(--dim);font-size:14px}
-footer .row{gap:18px}
-@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+a{color:#fff;text-decoration:none;border-bottom:2px solid var(--red)}
+a:hover{background:var(--red)}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}
+.lab{font-size:10px;letter-spacing:.3em;color:var(--g500);text-transform:uppercase}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:14px;padding:14px 24px;border-bottom:var(--rule);position:sticky;top:0;background:#000;z-index:9}
+.top .dot{width:11px;height:11px;background:var(--red);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.top b{font-size:17px;letter-spacing:.06em;font-weight:700}
+.top .sep{color:var(--g700)}
+.top .gh{margin-left:auto;font-size:11px;letter-spacing:.22em;padding:9px 16px;border:var(--rule);border-bottom:var(--rule)}
+.top .gh:hover{background:var(--red);border-color:var(--red)}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.02fr .98fr;gap:44px;align-items:center;padding:66px 0 54px}
+h1{font-size:clamp(2.5rem,5.6vw,4.4rem);line-height:.94;letter-spacing:-.03em;font-weight:700;text-transform:uppercase}
+.rule{height:5px;background:var(--red);margin:20px 0 18px;max-width:420px}
+.sub{font-size:13px;letter-spacing:.4em;color:var(--g300);font-weight:700;text-transform:uppercase}
+.lede{font-size:19px;color:#e5e7eb;max-width:46ch;margin:22px 0 0}
+.lede b{color:#fff}
+.btns{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+.btn{display:inline-block;padding:13px 20px;border:var(--rule);font-weight:700;font-size:11.5px;letter-spacing:.18em;text-transform:uppercase}
+.btn.p{background:var(--red);border-color:var(--red)}
+.btn.p:hover{background:var(--red-d);border-color:var(--red-d)}
+.btn:hover{background:var(--g900)}
+.note{margin-top:18px;font-size:12.5px;letter-spacing:.06em;color:var(--g400);max-width:52ch;line-height:1.7}
+.shot{border:var(--rule);display:block;width:100%;height:auto;background:#000}
+.shot-cap{font-size:10px;letter-spacing:.2em;color:var(--g500);margin-top:10px;text-transform:uppercase}
+
+/* sections */
+section{border-top:var(--rule);padding:54px 0}
+h2{font-size:clamp(1.5rem,3.2vw,2.2rem);text-transform:uppercase;letter-spacing:-.01em;font-weight:700;line-height:1.05}
+.h2sub{color:var(--g400);margin-top:10px;max-width:64ch;font-size:16px}
+.grid{display:grid;gap:0;border:var(--rule);border-top:0;margin-top:28px}
+.steps{grid-template-columns:repeat(3,1fr)}
+.step{padding:26px 24px;border-right:var(--rule);position:relative}
+.step:last-child{border-right:0}
+.step .n{font-size:11px;letter-spacing:.3em;color:var(--red);font-weight:700}
+.step h3{font-size:20px;text-transform:uppercase;margin:10px 0 8px;letter-spacing:-.01em}
+.step p{color:var(--g400);font-size:15px}
+.cards{grid-template-columns:repeat(3,1fr)}
+.card{padding:24px;border-right:var(--rule);border-bottom:var(--rule)}
+.card:nth-child(3n){border-right:0}
+.card:nth-last-child(-n+3){border-bottom:0}
+.card h3{font-size:16px;text-transform:uppercase;letter-spacing:.02em;margin-bottom:8px}
+.card p{color:var(--g400);font-size:14.5px}
+.tick{display:inline-block;width:10px;height:10px;background:var(--red);margin-right:9px;vertical-align:0}
+
+/* screenshots */
+.shots{display:grid;grid-template-columns:.62fr 1fr;gap:26px;margin-top:28px;align-items:start}
+.mobile-shot{max-width:100%}
+
+/* status */
+.status{display:grid;grid-template-columns:repeat(4,1fr);border:var(--rule);border-top:0;margin-top:28px}
+.st{padding:20px 22px;border-right:var(--rule)}
+.st:last-child{border-right:0}
+.st b{display:block;font-size:9.5px;letter-spacing:.3em;color:var(--g400);font-weight:400;margin-bottom:10px;text-transform:uppercase}
+.st span{font-size:19px;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
+.ok{color:var(--green)} .warn{color:var(--red)}
+
+/* code */
+pre{border:var(--rule);padding:22px;overflow:auto;background:#000;margin-top:26px;font-size:13.5px;line-height:1.7}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:0}
+pre code{color:#e5e7eb}
+pre .c{color:var(--g500)}
+
+/* faq */
+details{border:var(--rule);border-top:0;padding:18px 22px}
+details:first-of-type{border-top:var(--rule);margin-top:28px}
+summary{cursor:pointer;font-weight:700;text-transform:uppercase;font-size:14px;letter-spacing:.06em;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"+ ";color:var(--red)}
+details[open] summary::before{content:"– "}
+details p{color:var(--g400);margin-top:12px;font-size:15px}
+
+footer{border-top:var(--rule);padding:34px 0 60px;color:var(--g500);font-size:12px;letter-spacing:.16em;text-transform:uppercase}
+footer .row{display:flex;gap:26px;flex-wrap:wrap;align-items:center}
+footer a{border-bottom-width:1px}
+
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr;gap:30px;padding:44px 0}
+  .steps,.cards,.status,.shots{grid-template-columns:1fr}
+  .step,.card,.st{border-right:0;border-bottom:var(--rule)}
+  .card:nth-last-child(-n+3){border-bottom:var(--rule)}
+  .card:last-child,.st:last-child{border-bottom:0}
+  .mobile-shot{max-width:100%}
+}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 
-<header class="hero">
-  <div class="wrap">
-    <span class="eyebrow"><span class="dot"></span> in development</span>
-    <h1>Notes that <span class="g">schedule themselves</span>.</h1>
-    <p class="lede">
-      Write the sentence you would say out loud — “remind me to send the grant report tomorrow at 3pm”.
-      SmartNote Scheduler reads it, files it, sets the priority, pulls out the date and reminds you.
-      No folders, no date pickers, no category dropdowns.
-    </p>
-    <div class="row">
-      <a class="btn primary" href="https://github.com/drsamonline/smartnote-scheduler">Source on GitHub</a>
-      <a class="btn" href="#run">Run it locally</a>
-      <a class="btn" href="#status">What works today</a>
+<div class="top">
+  <span class="dot"></span><b>SMARTNOTE</b><span class="sep">/</span><span class="lab">SCHEDULER · 01</span>
+  <a class="gh" href="https://github.com/drsamonline/smartnote-scheduler">SOURCE ↗</a>
+</div>
+
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <h1>Notes that<br>schedule<br>themselves</h1>
+      <div class="rule"></div>
+      <div class="sub">Write it · It files it · You get reminded</div>
+      <p class="lede">
+        Write the sentence you would say out loud — <b>“remind me to send the grant report
+        tomorrow at 3pm”</b>. SmartNote Scheduler reads it, files it, sets the priority, pulls
+        out the date and reminds you. No folders, no date pickers, no category dropdowns.
+      </p>
+      <div class="btns">
+        <a class="btn p" href="https://github.com/drsamonline/smartnote-scheduler">Source on GitHub</a>
+        <a class="btn" href="#run">Run it locally</a>
+        <a class="btn" href="#status">Status</a>
+      </div>
+      <p class="note">
+        There is no hosted demo, and this page will not pretend otherwise: the app is a React
+        client behind a Node/tRPC server on a MySQL-compatible database. It runs on your machine,
+        with your database, in a few commands.
+      </p>
     </div>
-    <p class="note">
-      There is <b>no hosted demo</b>, and this page will not pretend otherwise: the app is a React client
-      plus a Node/tRPC server on a MySQL-compatible database, so it cannot run as a static page.
-      It runs on your machine, with your database, in a few commands.
-    </p>
-    <div class="chips">
-      <span class="chip">React + Vite</span>
-      <span class="chip">tRPC</span>
-      <span class="chip">Drizzle ORM</span>
-      <span class="chip">MySQL-compatible</span>
-      <span class="chip">push + optional email</span>
-      <span class="chip">JSON / CSV / Markdown export</span>
-      <span class="chip">MIT</span>
+    <div>
+      <img class="shot" src="assets/dashboard.png" width="1440" height="900"
+           alt="The SmartNote Scheduler dashboard: a black screen with a white-ruled sidebar reading SMARTNOTE / SCHEDULER / 01, four stat boxes (total, completed, pending, overdue), a note composer, category filters and note cards carrying category and priority tags.">
+      <p class="shot-cap">The dashboard — rendered from the app's own components and design tokens</p>
     </div>
   </div>
-</header>
+</div>
 
 <section id="how">
   <div class="wrap">
     <h2>Three steps, then it is off your mind</h2>
-    <p class="sub">The whole point is that capture stays cheaper than forgetting.</p>
-    <div class="steps">
-      <div class="step"><b>Write it plainly</b><span>One text box. “renew the insurance by Friday”, “standup tomorrow at 9am”.</span></div>
-      <div class="step"><b>It reads and files it</b><span>In one pass: category, priority, a title, and the date and time it found in your words.</span></div>
-      <div class="step"><b>You get reminded</b><span>Reminders are stored with the note and delivered by push, or email when a webhook is configured.</span></div>
-    </div>
-  </div>
-</section>
-
-<section id="ui">
-  <div class="wrap">
-    <h2>What the dashboard looks like</h2>
-    <p class="sub">
-      A drawn reconstruction of the real layout — five category tabs, priority pills, overdue items first.
-      It is an illustration, not a live capture, because there is no hosted instance to capture.
-    </p>
-    <div class="mock">
-      <div class="bar"><i></i><i></i><i></i><span style="margin-left:8px">smartnote / dashboard</span></div>
-      <div class="body">
-        <div class="tabs">
-          <span class="tab on">All</span><span class="tab">Tasks</span><span class="tab">Deadlines</span>
-          <span class="tab">Schedule</span><span class="tab">Thoughts</span><span class="tab">Learning</span>
-        </div>
-        <div class="item over">
-          <div><div class="t">Renew the insurance</div><div class="m">Deadlines · overdue</div></div>
-          <span class="pill p-hi">High</span>
-        </div>
-        <div class="item">
-          <div><div class="t">Send the grant report</div><div class="m">Tasks · due tomorrow, 3:00 PM</div></div>
-          <span class="pill p-hi">High</span>
-        </div>
-        <div class="item">
-          <div><div class="t">Team standup</div><div class="m">Schedule · tomorrow, 9:00 AM</div></div>
-          <span class="pill p-md">Medium</span>
-        </div>
-        <div class="item">
-          <div><div class="t">Idea: paper-first capture</div><div class="m">Thoughts · no date</div></div>
-          <span class="pill p-lo">Low</span>
-        </div>
-      </div>
+    <p class="h2sub">The whole point is that capture stays cheaper than forgetting.</p>
+    <div class="grid steps">
+      <div class="step"><div class="n">01</div><h3>Write it plainly</h3><p>One text box. “renew the insurance by Friday”, “standup tomorrow at 9am”.</p></div>
+      <div class="step"><div class="n">02</div><h3>It reads and files it</h3><p>In one pass: category, priority, a title, and the date and time it found in your words.</p></div>
+      <div class="step"><div class="n">03</div><h3>You get reminded</h3><p>Reminders are stored with the note and delivered by push, or email when a webhook is configured.</p></div>
     </div>
   </div>
 </section>
@@ -171,27 +176,55 @@ footer .row{gap:18px}
 <section id="features">
   <div class="wrap">
     <h2>What is in the code today</h2>
-    <p class="sub">Every item below is implemented in this repository — nothing here is a roadmap dressed up as a feature.</p>
-    <div class="grid">
-      <div class="card"><h3>Five categories, no filing</h3><p>Tasks, Deadlines, Schedule, Thoughts and Learning — assigned by the model, not by you.</p></div>
-      <div class="card"><h3>Priority and dates</h3><p>Low, Medium or High, plus the date and time extracted from plain language.</p></div>
-      <div class="card"><h3>Reminders that survive a restart</h3><p>Due reminders are processed by a heartbeat endpoint, not an in-process timer, so nothing is lost when the server restarts.</p></div>
-      <div class="card"><h3>Delivery you can audit</h3><p>Every push and email attempt is recorded as sent, failed or skipped. A failure is visible, not silent.</p></div>
-      <div class="card"><h3>Search, filters, stats</h3><p>Full-text search, category tabs, hide-completed, and totals for pending and overdue.</p></div>
-      <div class="card"><h3>Your notes stay portable</h3><p>JSON backup and restore, plus CSV and Markdown export.</p></div>
+    <p class="h2sub">Every item below is implemented in this repository — nothing here is a roadmap dressed up as a feature.</p>
+    <div class="grid cards">
+      <div class="card"><h3><span class="tick"></span>Five categories, no filing</h3><p>Tasks, Deadlines, Schedule, Thoughts and Learning — assigned by the model, not by you.</p></div>
+      <div class="card"><h3><span class="tick"></span>Priority and dates</h3><p>Low, Medium or High, plus the date and time extracted from plain language.</p></div>
+      <div class="card"><h3><span class="tick"></span>Reminders that survive a restart</h3><p>Due reminders are processed by a heartbeat endpoint, not an in-process timer.</p></div>
+      <div class="card"><h3><span class="tick"></span>Delivery you can audit</h3><p>Every push and email attempt is recorded as sent, failed or skipped. A failure is visible, not silent.</p></div>
+      <div class="card"><h3><span class="tick"></span>Search, filters, stats</h3><p>Full-text search, category tabs, hide-completed, and totals for pending and overdue.</p></div>
+      <div class="card"><h3><span class="tick"></span>Your notes stay portable</h3><p>JSON backup and restore, plus CSV and Markdown export.</p></div>
     </div>
+  </div>
+</section>
+
+<section id="screens">
+  <div class="wrap">
+    <h2>On a phone, and on the way in</h2>
+    <p class="h2sub">
+      The same black-and-red system at every size: the sidebar collapses to a rail, the composer stays
+      first, and the note cards keep their category and priority tags.
+    </p>
+    <div class="shots">
+      <div>
+        <img class="shot mobile-shot" src="assets/dashboard-mobile.png" width="390" height="844"
+             alt="The same dashboard on a phone: SMARTNOTE header bar, a composer reading 'renew the insurance by Friday' with an AI classification line, category chips and note cards.">
+        <p class="shot-cap">Phone layout — 390 × 844</p>
+      </div>
+      <div>
+        <img class="shot" src="assets/login.png" width="1100" height="720"
+             alt="The entry screen: the word SMARTNOTE in large condensed capitals over a red rule, SCHEDULER beneath it, and a red ENTER button.">
+        <p class="shot-cap">The entry screen</p>
+      </div>
+    </div>
+    <p class="note">
+      These three images are renders of the app's real layout, produced from its own components and
+      design tokens (<code>client/src/index.css</code>, <code>BrutalistDashboard.tsx</code>,
+      <code>NoteCard.tsx</code>). They are not live captures, because there is no hosted instance to
+      capture — the honest alternative is to say so rather than pass a mock off as a screenshot.
+    </p>
   </div>
 </section>
 
 <section id="status">
   <div class="wrap">
     <h2>Status — said plainly</h2>
-    <p class="sub">This is a work in progress. The list below is the honest state of it, not a launch announcement.</p>
+    <p class="h2sub">This is a work in progress. The row below is the honest state of it, not a launch announcement.</p>
     <div class="status">
-      <div class="st"><b>Repository</b><span class="dotok">public</span></div>
-      <div class="st"><b>Release</b><span class="dotwarn">none yet</span></div>
-      <div class="st"><b>Hosted instance</b><span class="dotwarn">none — needs a server and a database</span></div>
-      <div class="st"><b>Tests</b><span>vitest suite in <code>server/*.test.ts</code></span></div>
+      <div class="st"><b>Repository</b><span class="ok">public</span></div>
+      <div class="st"><b>Release</b><span class="warn">none yet</span></div>
+      <div class="st"><b>Hosted instance</b><span class="warn">none</span></div>
+      <div class="st"><b>Tests</b><span>vitest</span></div>
     </div>
   </div>
 </section>
@@ -199,7 +232,7 @@ footer .row{gap:18px}
 <section id="run">
   <div class="wrap">
     <h2>Run it locally</h2>
-    <p class="sub">
+    <p class="h2sub">
       Node 20+, pnpm, and a MySQL-compatible database. Configuration lives in environment variables —
       the app reads them at start-up and never carries a key in the repository.
     </p>
@@ -207,13 +240,13 @@ footer .row{gap:18px}
 cd smartnote-scheduler
 pnpm install
 
-# .env: DATABASE_URL, JWT_SECRET, and the model/webhook keys you use
-pnpm db:push      # generate + apply the Drizzle migrations
-pnpm dev          # server + Vite HMR
+<span class="c"># .env: DATABASE_URL, JWT_SECRET, and the model/webhook keys you use</span>
+pnpm db:push      <span class="c"># generate + apply the Drizzle migrations</span>
+pnpm dev          <span class="c"># server + Vite HMR</span>
 
-pnpm test         # vitest
-pnpm check        # tsc --noEmit
-pnpm build &amp;&amp; pnpm start   # production</code></pre>
+pnpm test         <span class="c"># vitest</span>
+pnpm check        <span class="c"># tsc --noEmit</span>
+pnpm build &amp;&amp; pnpm start   <span class="c"># production</span></code></pre>
     <p class="note">Email delivery is optional: leave the webhook unset and deliveries are recorded as skipped rather than failing.</p>
   </div>
 </section>
@@ -239,7 +272,7 @@ pnpm build &amp;&amp; pnpm start   # production</code></pre>
       <a href="https://github.com/drsamonline/smartnote-scheduler">github.com/drsamonline/smartnote-scheduler</a>
       <a href="https://github.com/drsamonline/smartnote-scheduler/blob/main/LICENSE">MIT licence</a>
     </div>
-    <p style="margin-top:14px">This page is one hand-written file with no external requests — no fonts, no analytics, no trackers.</p>
+    <p style="margin-top:16px;letter-spacing:.1em;text-transform:none">One hand-written file, no external requests — no fonts, no analytics, no trackers.</p>
   </div>
 </footer>
 
