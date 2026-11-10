@@ -100,6 +100,21 @@ shared/     types shared by both sides.
 **In development.** The repository is public so the work is visible while it is still being built:
 there is no release, no hosted instance, and no stable API. Expect rough edges.
 
+<!-- support:sweep -->
+## Support
+
+One person's work: no company, no ads, no tracking, no paid tier. If it saved you an
+afternoon, a contribution keeps the next one coming — any amount, or none.
+
+| | |
+|---|---|
+| **UPI** | `drsohilboi@ybl` |
+| **Ko-fi** | [ko-fi.com/matneo](https://ko-fi.com/matneo) |
+| **PayPal** | [paypal.me/drsohilmomin](https://paypal.me/drsohilmomin?locale.x=en_GB&country.x=IN) |
+| **Books** | [the author's other work](https://www.amazon.com/stores/author/B08ZT331LY/allbooks) |
+| **Elsewhere** | [all projects](https://drsamonline.github.io/) |
+| **Email** | [sohilmomin2000@gmail.com](mailto:sohilmomin2000@gmail.com) — bugs, corrections, requests |
+
 ## Licence
 
 MIT — see [LICENSE](LICENSE).
