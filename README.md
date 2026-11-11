@@ -2,6 +2,8 @@
 
 # SMARTNOTE — SCHEDULER
 
+
+![Screenshot](docs/shot.png)
 **Notes that schedule themselves.** Write a note in plain English; it is classified,
 prioritised, dated and reminded. No folders, no date pickers, no category dropdowns.
 
